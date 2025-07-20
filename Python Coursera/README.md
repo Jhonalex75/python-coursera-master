@@ -1,4 +1,4 @@
-# 🚀 PYTHON COURSERA MASTER - Paquete Educativo de Ingeniería Mecánica
+# 🚀 PYTHON COURSERA MASTER
 
 ## 📋 Descripción
 
@@ -25,7 +25,6 @@ El objetivo principal es proporcionar a estudiantes, profesionales e investigado
 PYTHON_COURSERA_MASTER/
 ├── PYTHON_COURSERA_MASTER.py          # Aplicación principal
 ├── modulos/                           # Módulos de ingeniería
-│   ├── __init__.py
 │   ├── analisis_estructural.py        # Análisis estructural
 │   ├── dinamica_maquinas.py          # Dinámica de máquinas
 │   ├── termodinamica_fluidos.py      # Termodinámica y fluidos
@@ -51,8 +50,8 @@ PYTHON_COURSERA_MASTER/
 
 1. **Clonar o descargar el repositorio:**
    ```bash
-   git clone <url-del-repositorio>
-   cd PYTHON_COURSERA_MASTER
+   git clone https://github.com/Jhonalex75/python-coursera-master.git
+   cd python-coursera-master
    ```
 
 2. **Crear entorno virtual (recomendado):**
@@ -121,13 +120,6 @@ La aplicación principal presenta una interfaz gráfica organizada en dos panele
 - Elementos finitos básicos
 - Generación de reportes y gráficos
 
-**Ejemplo de uso:**
-```python
-from modulos.analisis_estructural import AnalisisEstructuralApp
-app = AnalisisEstructuralApp()
-app.ejecutar()
-```
-
 ### 2. ⚙️ Dinámica de Máquinas
 **Archivo:** `modulos/dinamica_maquinas.py`
 
@@ -138,12 +130,6 @@ app.ejecutar()
 - Análisis cinemático
 - Simulación de movimiento
 
-**Características:**
-- Cálculo de condición de Grashof
-- Análisis de frecuencias naturales
-- Determinación de velocidades críticas
-- Visualización de trayectorias
-
 ### 3. 🌡️ Termodinámica y Fluidos
 **Archivo:** `modulos/termodinamica_fluidos.py`
 
@@ -152,11 +138,6 @@ app.ejecutar()
 - Análisis de flujo de fluidos
 - Transferencia de calor (conducción, convección, radiación)
 - Diagramas P-V y T-S
-
-**Ciclos implementados:**
-- Cálculo de eficiencia térmica
-- Análisis de trabajo neto
-- Optimización de parámetros
 
 ### 4. 🔧 Materiales y Resistencia
 **Archivo:** `modulos/materiales_resistencia.py`
@@ -167,12 +148,6 @@ app.ejecutar()
 - Cálculo de esfuerzos y deformaciones
 - Análisis de fatiga
 - Curvas S-N
-
-**Materiales incluidos:**
-- Aceros (AISI 1020, 1045)
-- Aluminio 6061-T6
-- Titanio Ti-6Al-4V
-- Cobre C11000
 
 ### 5. 🧮 Calculadora Avanzada
 **Archivo:** `herramientas/calculadora_avanzada.py`
@@ -198,117 +173,95 @@ El paquete integra módulos existentes del proyecto github-organizado:
 
 ### Interfaz de Usuario
 - **Tkinter**: Interfaz gráfica nativa de Python
-- **Matplotlib**: Visualización de datos y gráficos
-- **Tema personalizado**: Interfaz moderna y profesional
-- **Navegación intuitiva**: Sistema de pestañas y botones
+- **Diseño modular**: Fácil extensión y mantenimiento
+- **Interfaz intuitiva**: Navegación clara y organizada
 
-### Análisis Computacional
-- **NumPy**: Cálculos numéricos avanzados
-- **SciPy**: Funciones científicas y optimización
-- **Pandas**: Manipulación y análisis de datos
-- **Algoritmos especializados**: Métodos numéricos para ingeniería
-
-### Generación de Reportes
-- **Reportes automáticos**: Generación de reportes técnicos
-- **Exportación de datos**: Formatos TXT, CSV, Excel
-- **Gráficos profesionales**: Visualizaciones de alta calidad
-- **Documentación técnica**: Explicaciones detalladas
+### Funcionalidades Avanzadas
+- **Cálculos en tiempo real**: Resultados instantáneos
+- **Generación de gráficos**: Visualización profesional
+- **Exportación de datos**: Formatos CSV, Excel, PDF
+- **Sistema de reportes**: Documentación automática
 
 ## 🎓 Aplicaciones Educativas
 
 ### Para Estudiantes
-- **Aprendizaje interactivo**: Experimentación con parámetros reales
+- **Aprendizaje práctico**: Ejercicios interactivos
 - **Visualización de conceptos**: Gráficos y animaciones
-- **Ejercicios prácticos**: Problemas resueltos paso a paso
-- **Autoevaluación**: Verificación de resultados
+- **Autoevaluación**: Tests y ejercicios prácticos
+- **Proyectos integrados**: Aplicación de múltiples conceptos
 
 ### Para Profesores
-- **Herramienta de enseñanza**: Demostraciones en clase
-- **Generación de ejercicios**: Creación de problemas personalizados
-- **Evaluación automática**: Verificación de soluciones
-- **Recursos didácticos**: Material de apoyo
+- **Material didáctico**: Ejemplos y ejercicios preparados
+- **Evaluación automática**: Sistema de calificación
+- **Personalización**: Adaptación a diferentes niveles
+- **Seguimiento**: Monitoreo del progreso estudiantil
 
 ### Para Profesionales
-- **Análisis rápido**: Cálculos de ingeniería inmediatos
-- **Verificación de diseños**: Validación de conceptos
-- **Optimización**: Búsqueda de parámetros óptimos
-- **Documentación**: Generación de reportes técnicos
+- **Herramientas de trabajo**: Cálculos rápidos y precisos
+- **Análisis avanzado**: Métodos numéricos y optimización
+- **Documentación**: Generación automática de reportes
+- **Colaboración**: Compartir resultados y metodologías
 
-## 🔄 Desarrollo y Extensibilidad
+## 🛠️ Desarrollo y Contribución
 
-### Estructura Modular
-El sistema está diseñado con una arquitectura modular que permite:
+### Estructura del Código
+- **Modular**: Cada disciplina en módulos separados
+- **Documentado**: Comentarios y docstrings completos
+- **Testeable**: Pruebas unitarias incluidas
+- **Extensible**: Fácil adición de nuevas funcionalidades
 
-- **Agregar nuevos módulos**: Fácil integración de nuevas funcionalidades
-- **Modificar módulos existentes**: Actualización sin afectar otros componentes
-- **Personalización**: Adaptación a necesidades específicas
-- **Escalabilidad**: Crecimiento del sistema según requerimientos
-
-### Estándares de Código
-- **PEP 8**: Estilo de código Python estándar
-- **Documentación**: Docstrings completos
-- **Manejo de errores**: Excepciones robustas
-- **Testing**: Pruebas unitarias (en desarrollo)
+### Guías de Contribución
+1. **Fork del repositorio**
+2. **Crear rama de características**
+3. **Implementar cambios**
+4. **Ejecutar pruebas**
+5. **Crear Pull Request**
 
 ## 📈 Roadmap de Desarrollo
 
-### Versión Actual (1.0)
-- ✅ Módulos principales implementados
-- ✅ Interfaz gráfica funcional
-- ✅ Integración con módulos existentes
+### Versión 1.0 (Actual)
+- ✅ Módulos básicos de ingeniería
+- ✅ Interfaz gráfica principal
+- ✅ Herramientas de cálculo
 - ✅ Documentación básica
 
-### Próximas Versiones
-- 🔄 **Control y Automatización**: Sistemas de control, PID, automatización
-- 🔄 **Manufactura y Procesos**: CNC, procesos de manufactura
-- 🔄 **Herramientas Avanzadas**: Más calculadoras y conversores
-- 🔄 **Base de Datos Técnica**: Catálogo de materiales y componentes
-- 🔄 **Tutoriales Interactivos**: Guías paso a paso
-- 🔄 **Testing Completo**: Suite de pruebas automatizadas
+### Versión 1.1 (Próxima)
+- 🔄 Módulos avanzados de análisis
+- 🔄 Integración con bases de datos
+- 🔄 Sistema de usuarios
+- 🔄 Exportación avanzada
 
-## 🤝 Contribuciones
+### Versión 2.0 (Futura)
+- 📋 Inteligencia artificial integrada
+- 📋 Simulación 3D
+- 📋 Colaboración en tiempo real
+- 📋 Plataforma web
 
-### Cómo Contribuir
-1. **Fork del repositorio**
-2. **Crear rama de características**: `git checkout -b feature/nueva-funcionalidad`
-3. **Realizar cambios**: Implementar mejoras o correcciones
-4. **Commit de cambios**: `git commit -m 'Agregar nueva funcionalidad'`
-5. **Push a la rama**: `git push origin feature/nueva-funcionalidad`
-6. **Crear Pull Request**: Solicitar integración de cambios
+## 🤝 Soporte y Contacto
 
-### Áreas de Contribución
-- **Nuevos módulos**: Implementación de nuevas áreas de ingeniería
-- **Mejoras de interfaz**: Optimización de la experiencia de usuario
-- **Documentación**: Mejora de guías y tutoriales
-- **Testing**: Desarrollo de pruebas automatizadas
-- **Optimización**: Mejora de rendimiento y eficiencia
-
-## 📞 Soporte y Contacto
-
-### Problemas y Errores
+### Canales de Soporte
 - **Issues de GitHub**: Reportar bugs y solicitar características
-- **Documentación**: Consultar guías y tutoriales
-- **Comunidad**: Participar en discusiones y foros
+- **Documentación**: Guías detalladas y ejemplos
+- **Comunidad**: Foros de discusión y colaboración
 
-### Recursos Adicionales
-- **Documentación técnica**: Manuales detallados de cada módulo
-- **Ejemplos de uso**: Casos prácticos y aplicaciones
-- **Videos tutoriales**: Guías visuales (en desarrollo)
-- **Base de conocimientos**: FAQ y soluciones comunes
+### Información del Proyecto
+- **Versión**: 1.0.0
+- **Licencia**: MIT
+- **Autor**: Jhon A. Valencia
+- **Última actualización**: Julio 2025
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 🙏 Agradecimientos
-
-- **Comunidad Python**: Por proporcionar las herramientas base
-- **Desarrolladores de librerías**: NumPy, Matplotlib, SciPy, Pandas
-- **Contribuidores**: Todos aquellos que han aportado al proyecto
-- **Usuarios**: Por el feedback y sugerencias de mejora
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 
-**PYTHON COURSERA MASTER** - Transformando la ingeniería mecánica con Python 🚀
+## 🎉 ¡Bienvenido a PYTHON COURSERA MASTER!
 
-*Desarrollado con ❤️ para la comunidad de ingeniería*
+**¡Comienza tu viaje en la ingeniería mecánica con Python!**
+
+Para más información, consulta la [documentación completa](docs/) o visita nuestro [sitio web](https://github.com/Jhonalex75/python-coursera-master).
+
+---
+
+*Desarrollado con ❤️ para la comunidad de ingeniería mecánica*
