@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mi Aplicación Django{% endblock %}</title>
+    {# You can include global CSS here #}
+    {% block extra_head %}{% endblock %} {# For page-specific CSS and JS #}
+</head>
+<body>
+    <header>
+        {# Site Header #}
+    </header>
+
+    <main>
+        {% block content %}{% endblock %} {# Content from dashboard.html will be inserted here #}
+    </main>
+
+    <footer>
+        {# Site Footer #}
+    </footer>
+
+    {% block extra_js %}{% endblock %} {# For page-specific JS #}
+</body>
+</html>

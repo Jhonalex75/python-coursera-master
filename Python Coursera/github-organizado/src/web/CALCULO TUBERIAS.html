@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimador de Costos de Reparación de Tuberías</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Puedes vincular main.js y styles.css aquí si lo deseas -->
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <!-- <script src="main.js"></script> -->
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+            padding: 0;
+            color: #111827;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+            color: #374151;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Estilos del contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Estilos del encabezado */
+        header {
+            background-color: #2563eb;
+            color: #ffffff;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        /* Estilos del formulario */
+        form {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+            padding: 2rem;
+        }
+
+        /* Estilos de los campos del formulario */
+        .form-field {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-field input, .form-field select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            width: 100%;
+        }
+
+        /* Estilos del botón */
+        button {
+            background-color: #2563eb;
+            border: none;
+            border-radius: 0.375rem;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Estilos de la tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f3f4f6;
+        }
+
+        /* Estilos de los gráficos */
+        .chart-container {
+            margin-top: 2rem;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 0.5rem 0;
+            }
+
+            form {
+                padding: 1rem;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="text-3xl font-bold">Estimador de Costos de Reparación de Tuberías</h1>
+    </header>
+    <div class="container">
+        <form id="repair-cost-form">
+            <div class="form-field">
+                <label for="material">Material de la tubería:</label>
+                <select id="material" name="material" required>
+                    <option value="">Seleccione el material</option>
+                    <option value="PVC">PVC</option>
+                    <option value="PEAD">PEAD</option>
+                    <option value="Hierro fundido">Hierro fundido</option>
+                    <option value="Acero al carbono">Acero al carbono</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="diametro">Diámetro de la tubería (pulgadas):</label>
+                <input type="number" id="diametro" name="diametro" required>
+            </div>
+            <div class="form-field">
+                <label for="longitud">Longitud de la sección a reparar (pies):</label>
+                <input type="number" id="longitud" name="longitud" required>
+            </div>
+            <div class="form-field">
+                <label for="tipo-reparacion">Tipo de reparación:</label>
+                <select id="tipo-reparacion" name="tipo-reparacion" required>
+                    <option value="">Seleccione el tipo de reparación</option>
+                    <option value="Sellado">Sellado</option>
+                    <option value="Reemplazo">Reemplazo</option>
+                    <option value="Refuerzo">Refuerzo</option>
+                </select>
+            </div>
+            <button type="submit">Calcular costo</button>
+        </form>
+        <div id="result" class="mt-4"></div>
+        <div class="chart-container" id="chart-container"></div>
+    </div>
+    <script>
+        // Función para calcular el costo de reparación
+        function calcularCosto(material, diametro, longitud, tipoReparacion) {
+            let costoMaterial = 0;
+            let costoManoObra = 0;
+            let costoTotal = 0;
+
+            // Definir costos por material
+            switch (material) {
+                case 'PVC':
+                    costoMaterial = 10;
+                    break;
+                case 'PEAD':
+                    costoMaterial = 15;
+                    break;
+                case 'Hierro fundido':
+                    costoMaterial = 20;
+                    break;
+                case 'Acero al carbono':
+                    costoMaterial = 25;
+                    break;
+            }
+
+            // Calcular costo de mano de obra
+            costoManoObra = longitud * 5;
+
+            // Calcular costo total
+            costoTotal = (costoMaterial + costoManoObra) * diametro;
+
+            // Ajustar costo según tipo de reparación
+            switch (tipoReparacion) {
+                case 'Sellado':
+                    costoTotal *= 1;
+                    break;
+                case 'Reemplazo':
+                    costoTotal *= 1.5;
+                    break;
+                case 'Refuerzo':
+                    costoTotal *= 1.2;
+                    break;
+            }
+
+            return costoTotal;
+        }
+
+        // Manejar el envío del formulario
+        document.getElementById('repair-cost-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Obtener valores del formulario
+            const material = document.getElementById('material').value;
+            const diametro = parseFloat(document.getElementById('diametro').value);
+            const longitud = parseFloat(document.getElementById('longitud').value);
+            const tipoReparacion = document.getElementById('tipo-reparacion').value;
+
+            // Calcular costo
+            const costo = calcularCosto(material, diametro, longitud, tipoReparacion);
+
+            // Mostrar resultado
+            document.getElementById('result').innerHTML = `<h2 class="text-2xl font-semibold">Costo estimado: $${costo.toFixed(2)}</h2>`;
+
+            // Generar gráfico
+            const ctx = document.createElement('canvas');
+            document.getElementById('chart-container').innerHTML = '';
+            document.getElementById('chart-container').appendChild(ctx);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Material', 'Mano de obra'],
+                    datasets: [{
+                        label: 'Costo',
+                        data: [costoMaterial, costoManoObra],
+                        backgroundColor: ['#2563eb', '#34d399'],
+                        borderColor: ['#1d4ed8', '#10b981'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

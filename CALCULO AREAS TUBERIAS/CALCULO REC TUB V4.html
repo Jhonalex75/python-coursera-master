@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimador de Costos de Reparación de Tuberías</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; 
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #1e3a8a; 
+        }
+        .input-group label {
+            color: #374151; 
+        }
+        .input-field {
+            border-color: #9ca3af; 
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-weight: 500;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #2563eb; 
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; 
+        }
+        .btn-secondary {
+            background-color: #6b7280; 
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; 
+        }
+        .btn-success {
+            background-color: #10b981; 
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #059669; 
+        }
+        .tab-button {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 0.6rem 1.2rem; 
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem; 
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border: 1px solid transparent;
+            white-space: nowrap; 
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #1f2937;
+            color: white;
+            border-color: #1f2937;
+        }
+        .tab-button:hover:not(.active) {
+            background-color: #d1d5db;
+        }
+        .tab-content {
+            display: none;
+            padding-top: 1.5rem;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .material-tab-button { /* Specific style for material tabs */
+             /* Tailwind classes used directly in HTML for these */
+        }
+        .material-tab-button.active-material-tab { /* Specific style for active material tabs */
+            /* Tailwind classes used directly in HTML for these */
+        }
+        .material-tab-content {
+            display: none;
+        }
+        .material-tab-content.active-material-content {
+            display: block;
+        }
+
+        .component-card, .results-card, .item-entry-card, .labor-entry-card { /* Added .labor-entry-card */
+            background-color: #f9fafb; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .results-card-small {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .results-card-small h3 {
+            color: #1e3a8a; 
+            font-weight: 600; 
+            font-size: 0.875rem; 
+            margin-bottom: 0.25rem; 
+        }
+        .results-card-small p.value {
+            color: #1e3a8a; 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            margin-bottom: 0.1rem; 
+        }
+         .results-card-small p.sub-text, .results-card-small div.details {
+            font-size: 0.75rem; 
+            color: #6b7280; 
+            min-height: 20px; 
+        }
+
+        .total-cost-card {
+            background-color: #f3f4f6;
+            border-radius: 0.75rem;
+            padding: 1.5rem; 
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .total-cost-card h3 {
+            color: #111827; 
+            font-weight: 600; 
+            font-size: 1.125rem; 
+            margin-bottom: 0.5rem;
+        }
+        .total-cost-card p {
+            color: #111827; 
+            font-size: 2rem; 
+            font-weight: 800; 
+        }
+
+        .disclaimer {
+            background-color: #fffbeb; 
+            border-left: 4px solid #f59e0b; 
+            color: #b45309; 
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-top: 2rem;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .sub-section-title {
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: #374151; 
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        .remove-btn { 
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-left: 8px;
+            padding-bottom: 2px; 
+        }
+        .remove-btn:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold">Estimador de Costos de Reparación de Tuberías</h1>
+            <p class="text-lg text-gray-600 mt-2">Aplicación para estimar costos de reparación con productos DEACON Rocket</p>
+        </header>
+
+        <nav class="flex flex-wrap space-x-1 sm:space-x-2 mb-6 border-b border-gray-300 pb-3 justify-center">
+            <button class="tab-button active" data-tab="components">1. Componentes</button>
+            <button class="tab-button" data-tab="materials">2. Materiales</button>
+            <button class="tab-button" data-tab="labor">3. Mano de Obra</button>
+            <button class="tab-button" data-tab="safety">4. Seguridad</button>
+            <button class="tab-button" data-tab="equipment">5. Equipos y Cons.</button>
+            <button class="tab-button" data-tab="results">6. Resultados</button>
+        </nav>
+
+        <div id="tab-content-area">
+            <div id="components-tab" class="tab-content active">
+                <section id="pipe-components-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <h2 class="text-2xl font-semibold">Componentes de Tubería</h2>
+                    </div>
+                    <div id="components-container" class="space-y-4">
+                        </div>
+                    <button id="add-component-btn" class="mt-4 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Componente
+                    </button>
+                </section>
+            </div>
+
+            <div id="materials-tab" class="tab-content">
+                <section id="materials-section">
+                     <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        <h2 class="text-2xl font-semibold">Materiales DEACON Rocket</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Ingrese la cantidad y precio de los materiales que planea usar.</p>
+                    
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="-mb-px flex flex-wrap space-x-2" aria-label="Tabs"> <button class="material-tab-button active-material-tab whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500" data-material-tab="fabric-content">Rocket Fabric</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="primer-content">Rocket Primer</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="saturant-content">Rocket Saturant</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="filler-content">Rocket Filler</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="uv-top-coat-content">UV Top Coat</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="repair-kit-content">Repair Kit</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="diamond-putty-content">Diamond Putty</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="booster-kit-content">Booster Kit</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="jacket-wrap-content">Jacket Wrap</button>
+                        </nav>
+                    </div>
+
+                    <div id="fabric-content" class="material-tab-content active-material-content">
+                        <h3 class="text-xl font-medium text-indigo-700 mb-1">A. Deacon Rocket Fabric</h3>
+                        <p class="text-xs text-gray-600 mb-3">Material de refuerzo de fibra de carbono tejida.</p>
+                        <div class="p-3 bg-indigo-50 rounded-md border border-indigo-200">
+                            <p class="text-sm mb-2">Área total de tejido requerida (calculada): <strong id="total-fabric-area-required" class="text-indigo-700">0.00 m²</strong></p>
+                            <div id="fabric-rolls-container" class="space-y-2">
+                                </div>
+                            <button id="add-fabric-roll-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Rollo de Tejido</button>
+                        </div>
+                    </div>
+                    <div id="primer-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-green-700 mb-1">B. Deacon Rocket Primer</h3>
+                        <p class="text-xs text-gray-600 mb-3">Epoxi de dos componentes para promover la adhesión.</p>
+                        <div class="p-3 bg-green-50 rounded-md border border-green-200">
+                            <div id="primer-kits-container" class="space-y-2">
+                                </div>
+                            <button id="add-primer-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Primer</button>
+                        </div>
+                    </div>
+                    <div id="saturant-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-sky-700 mb-1">C. Deacon Rocket Saturant</h3>
+                        <p class="text-xs text-gray-600 mb-3">Epoxi de dos componentes para impregnación de tejido.</p>
+                        <div class="p-3 bg-sky-50 rounded-md border border-sky-200">
+                            <div id="saturant-kits-container" class="space-y-2">
+                                </div>
+                            <button id="add-saturant-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Saturante</button>
+                        </div>
+                    </div>
+                    <div id="filler-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-yellow-700 mb-1">D. Deacon Rocket Filler</h3>
+                        <p class="text-xs text-gray-600 mb-3">Epoxi de dos componentes para rellenar y suavizar transiciones.</p>
+                        <div class="p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                            <div id="filler-kits-container" class="space-y-2">
+                                </div>
+                            <button id="add-filler-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Relleno</button>
+                        </div>
+                    </div>
+                    <div id="uv-top-coat-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-purple-700 mb-1">E. Deacon UV Top Coat</h3>
+                        <p class="text-xs text-gray-600 mb-3">Pintura de dos componentes resistente a UV para proteger epoxis y sistema de composite.</p>
+                        <div class="p-3 bg-purple-50 rounded-md border border-purple-200">
+                            <div id="uv-top-coat-items-container" class="space-y-2">
+                            </div>
+                            <button id="add-uv-top-coat-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar UV Top Coat</button>
+                        </div>
+                    </div>
+                    <div id="repair-kit-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-pink-700 mb-1">F. Deacon Rocket Repair Kit</h3>
+                        <p class="text-xs text-gray-600 mb-3">Fibra de carbono pre-medida, saturante, primer y accesorios.</p>
+                        <div class="p-3 bg-pink-50 rounded-md border border-pink-200">
+                            <div id="repair-kit-items-container" class="space-y-2">
+                            </div>
+                            <button id="add-repair-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Repair Kit</button>
+                        </div>
+                    </div>
+                    <div id="diamond-putty-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-gray-700 mb-1">G. Deacon Diamond Putty</h3>
+                        <p class="text-xs text-gray-600 mb-3">Masilla reforzada con acero de fraguado rápido para reparaciones.</p>
+                        <div class="p-3 bg-gray-50 rounded-md border border-gray-200">
+                            <div id="diamond-putty-items-container" class="space-y-2">
+                            </div>
+                            <button id="add-diamond-putty-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Diamond Putty</button>
+                        </div>
+                    </div>
+                     <div id="booster-kit-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-teal-700 mb-1">H. Deacon Booster Kit</h3>
+                        <p class="text-xs text-gray-600 mb-3">Saturante, polvo booster y accesorios para construir grandes transiciones.</p>
+                        <div class="p-3 bg-teal-50 rounded-md border border-teal-200">
+                            <div id="booster-kit-items-container" class="space-y-2">
+                            </div>
+                            <button id="add-booster-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Booster Kit</button>
+                        </div>
+                    </div>
+                    <div id="jacket-wrap-content" class="material-tab-content">
+                        <h3 class="text-xl font-medium text-orange-700 mb-1">I. Deacon Jacket Wrap</h3>
+                        <p class="text-xs text-gray-600 mb-3">Film de compresión plástico para asegurar la compactación del tejido.</p>
+                        <div class="p-3 bg-orange-50 rounded-md border border-orange-200">
+                            <div id="jacket-wrap-items-container" class="space-y-2">
+                            </div>
+                            <button id="add-jacket-wrap-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Jacket Wrap</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="labor-tab" class="tab-content">
+                <section id="labor-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                         <h2 class="text-2xl font-semibold">Estimación de Mano de Obra</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Agregue los grupos de personal, sus cantidades, categorías y horas estimadas.</p>
+                    
+                    <div id="labor-entries-container" class="space-y-6">
+                        </div>
+                    <button id="add-labor-entry-btn" class="mt-6 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Personal
+                    </button>
+                </section>
+            </div>
+
+            <div id="safety-tab" class="tab-content">
+                <section id="safety-items-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        <h2 class="text-2xl font-semibold">Costos de Seguridad Industrial</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Agregue los elementos de seguridad, sus cantidades y costos.</p>
+                    <div id="safety-items-container" class="space-y-3">
+                        </div>
+                    <button id="add-safety-item-btn" class="mt-4 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Item de Seguridad
+                    </button>
+                </section>
+            </div>
+
+            <div id="equipment-tab" class="tab-content">
+                <section id="equipment-consumables-section">
+                    <div class="flex items-center mb-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-orange-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>
+                        <h2 class="text-2xl font-semibold">Arrendamiento de Equipos y Consumibles</h2>
+                    </div>
+                    
+                    <h3 class="sub-section-title">Arrendamiento de Equipos</h3>
+                    <p class="text-sm text-gray-500 mb-3">Agregue los equipos arrendados, cantidades y costos.</p>
+                    <div id="equipment-rental-items-container" class="space-y-3">
+                        </div>
+                    <button id="add-equipment-rental-item-btn" class="mt-3 btn btn-primary py-2 px-4 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Equipo Arrendado
+                    </button>
+
+                    <h3 class="sub-section-title">Consumibles</h3>
+                    <p class="text-sm text-gray-500 mb-3">Agregue los consumibles, cantidades y costos.</p>
+                    <div id="consumables-items-container" class="space-y-3">
+                        </div>
+                    <button id="add-consumable-item-btn" class="mt-3 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Consumible
+                    </button>
+                </section>
+            </div>
+            
+            <div id="results-tab" class="tab-content">
+                <section id="results-summary-section">
+                     <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <h2 class="text-2xl font-semibold">Resumen de la Estimación</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                        <div class="results-card-small">
+                            <h3>Área de Superficie</h3>
+                            <p id="total-surface-area" class="value text-indigo-600">0.00 m²</p>
+                            <p id="results-fabric-area-required" class="sub-text">Área tej. req: 0.00 m²</p>
+                            <div id="accessory-area-note" class="details text-xs"></div>
+                        </div>
+                        <div class="results-card-small">
+                            <h3>Costo de Materiales</h3>
+                            <p id="total-material-cost" class="value text-green-600">$0.00</p>
+                            <div id="material-cost-details" class="details"></div>
+                            <div id="material-cost-note" class="details text-xs"></div>
+                        </div>
+                        <div class="results-card-small">
+                            <h3>Costo de Mano de Obra</h3>
+                            <p id="total-labor-cost" class="value text-sky-600">$0.00</p>
+                            <div id="labor-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small">
+                            <h3>Costo de Seguridad</h3>
+                            <p id="total-safety-cost" class="value text-red-600">$0.00</p>
+                            <div id="safety-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small">
+                            <h3>Costo Equipos (Arr.)</h3>
+                            <p id="total-equipment-rental-cost" class="value text-orange-600">$0.00</p>
+                            <div id="equipment-rental-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small">
+                            <h3>Costo Consumibles</h3>
+                            <p id="total-consumables-cost" class="value text-yellow-600">$0.00</p>
+                            <div id="consumables-cost-details" class="details"></div>
+                        </div>
+                    </div>
+
+                    <div class="total-cost-card">
+                        <h3>Costo Total Estimado</h3>
+                        <p id="grand-total-cost">$0.00</p>
+                    </div>
+
+                    <div class="flex space-x-4 mt-8 justify-center">
+                        <button id="calculate-btn" class="btn btn-primary font-semibold py-2 px-5 text-base flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M12 10v-3m0 0h3m-3 0H9m12 4a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Calcular/Actualizar
+                        </button>
+                        <button id="export-excel-btn" class="btn btn-success font-semibold py-2 px-5 text-base flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v2h12V6H4zm0 4v2h12v-2H4zm0 4v2h12v-2H4z" /><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 9.586V5z" clip-rule="evenodd" /></svg>
+                            Exportar a Excel
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div> 
+        
+        <section id="limitations-disclaimer" class="disclaimer">
+            <h3 class="text-lg font-semibold mb-2">Limitaciones y Aclaraciones Importantes:</h3>
+            <ul class="list-disc list-inside text-sm space-y-1">
+                <li>El área superficial de tuberías rectas se calcula automáticamente. El área de accesorios (codos, tees, etc.) debe ser ingresada manualmente por el usuario.</li>
+                <li>Las tasas de cobertura para productos epóxicos (Filler, Saturant, Primer) no se especifican en las fuentes. La cantidad de estos materiales debe ser estimada e ingresada por el usuario.</li>
+                <li>Los precios de los productos DEACON Rocket no se proporcionan en las fuentes. El costo de los materiales se calcula utilizando los precios ingresados manualmente por el usuario.</li>
+                <li>El tiempo de mano de obra para la preparación y aplicación no se especifica en las fuentes. El usuario debe ingresar una estimación de las horas de trabajo.</li>
+                <li>Los costos de Seguridad, Arrendamiento de Equipos y Consumibles se basan en las entradas manuales del usuario.</li>
+                <li>Los cálculos de costos de mano de obra se basan en la "TABLA SALARIAL CONTRATISTA 2025 Revision 1.0" (datos de ejemplo) para campos petrolíferos y las horas ingresadas.</li>
+                <li>Esta aplicación es una herramienta de estimación. Los costos reales pueden variar. La funcionalidad de ActiveX Controls en Excel no es soportada por esta herramienta de exportación.</li>
+            </ul>
+        </section>
+    </div> 
+
+    <template id="pipe-component-template">
+        <div class="component-card" data-id="">
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="text-lg font-semibold text-gray-700">Componente #<span class="component-number"></span></h4>
+                <button class="remove-component-btn remove-btn" title="Eliminar componente">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium">Tipo de Componente:</label>
+                    <select class="component-type mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm">
+                        <option value="straight">Tubería Recta</option>
+                        <option value="accessory_elbow">Accesorio: Codo</option>
+                        <option value="accessory_tee">Accesorio: Tee</option>
+                        <option value="accessory_valve">Accesorio: Válvula</option>
+                        <option value="accessory_reducer">Accesorio: Reducción</option>
+                        <option value="accessory_flange">Accesorio: Brida</option>
+                        <option value="accessory_other">Accesorio: Otro</option>
+                    </select>
+                </div>
+                <div class="straight-pipe-dims">
+                    <label class="block text-sm font-medium">Diámetro Exterior (pulgadas):</label>
+                    <input type="number" min="0" step="0.01" class="component-diameter mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 6">
+                </div>
+                <div class="straight-pipe-dims">
+                    <label class="block text-sm font-medium">Longitud (metros):</label>
+                    <input type="number" min="0" step="0.01" class="component-length mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 10">
+                </div>
+                <div class="accessory-inputs hidden">
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium">Diámetro Nominal (pulgadas) <span class="text-xs text-gray-400">(Opcional)</span>:</label>
+                            <input type="number" min="0" step="0.01" class="component-accessory-diameter mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 4">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Área Exterior (m²):</label>
+                            <input type="number" min="0" step="0.01" class="component-accessory-area mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 0.5">
+                            <p class="text-xs text-gray-500 mt-1">Ingrese el área superficial del accesorio.</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Capas de Rocket Fabric:</label>
+                    <input type="number" min="1" value="1" class="component-layers mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm">
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="material-item-template">
+         <div class="material-item grid grid-cols-1 sm:grid-cols-3 gap-2 items-end border-t border-gray-200 pt-2 mt-2">
+            <div>
+                <label class="block text-xs font-medium">Tipo/Tamaño:</label>
+                <select class="material-size block w-full input-field rounded-md shadow-sm p-1.5 text-xs">
+                    </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Cantidad:</label>
+                <input type="number" min="0" value="1" class="material-quantity block w-full input-field rounded-md shadow-sm p-1.5 text-xs">
+            </div>
+            <div class="flex items-center">
+                <div class="flex-grow">
+                    <label class="block text-xs font-medium">Precio Unitario ($):</label>
+                    <input type="number" min="0" step="0.01" value="0" class="material-price block w-full input-field rounded-md shadow-sm p-1.5 text-xs">
+                </div>
+                <button class="remove-material-item-btn remove-btn" title="Eliminar item">&times;</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="generic-item-template"> 
+        <div class="item-entry-card grid grid-cols-1 sm:grid-cols-4 gap-3 items-end border-t border-gray-200 pt-3 mt-2">
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-medium">Descripción del Item:</label>
+                <input type="text" class="item-description mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm" placeholder="Ej: Casco de seguridad">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Cantidad:</label>
+                <input type="number" min="0" value="1" class="item-quantity mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm">
+            </div>
+            <div class="flex items-center">
+                <div class="flex-grow">
+                    <label class="block text-xs font-medium">Precio Unitario ($):</label>
+                    <input type="number" min="0" step="0.01" value="0" class="item-price mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm">
+                </div>
+                <button class="remove-generic-item-btn remove-btn" title="Eliminar item">&times;</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="labor-entry-template">
+        <div class="labor-entry-card" data-id="">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="text-lg font-semibold text-gray-700">Entrada de Personal #<span class="labor-entry-number"></span></h4>
+                <button class="remove-labor-entry-btn remove-btn" title="Eliminar entrada de personal">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div class="input-group">
+                    <label class="block text-sm font-medium">Categoría del Trabajador:</label>
+                    <select class="labor-worker-category mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm">
+                        </select>
+                </div>
+                <div class="input-group">
+                    <label class="block text-sm font-medium">Cantidad de Personas:</label>
+                    <input type="number" value="1" min="1" class="labor-quantity mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm">
+                </div>
+                <div class="input-group md:col-span-2"> <label class="block text-sm font-medium">Días Trabajados (para transporte):</label>
+                    <input type="number" value="0" min="0" class="labor-days-worked mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm">
+                </div>
+            </div>
+            <h5 class="text-md font-medium mt-4 mb-2 text-gray-600">Horas por Tipo (para este grupo):</h5>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div><label class="text-xs font-medium">Ordinarias:</label><input type="number" value="0" min="0" class="labor-ordinary-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Trabajo Nocturno (Recargo):</label><input type="number" value="0" min="0" class="labor-night-work-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Extra Diurnas:</label><input type="number" value="0" min="0" class="labor-extra-day-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Extra Nocturnas:</label><input type="number" value="0" min="0" class="labor-extra-night-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Extra Festiva Diurna:</label><input type="number" value="0" min="0" class="labor-holiday-extra-day-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Extra Festiva Nocturna:</label><input type="number" value="0" min="0" class="labor-holiday-extra-night-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                <div><label class="text-xs font-medium">Domingo Habitual (Recargo):</label><input type="number" value="0" min="0" class="labor-sunday-habitual-hours mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Constantes y Datos ---
+        const PI = Math.PI;
+        const INCH_TO_METER = 0.0254;
+        const FEET_TO_METER = 0.3048;
+
+        const deaconProducts = {
+            fabric: {
+                name: "Deacon Rocket Fabric",
+                rolls: [ 
+                    { id: "fab_2_10", text: "Deacon Rocket Fabric 2in x 10ft", widthInches: 2, lengthFeet: 10 },
+                    { id: "fab_2_15", text: "Deacon Rocket Fabric 2in x 15ft", widthInches: 2, lengthFeet: 15 },
+                    { id: "fab_2_30", text: "Deacon Rocket Fabric 2in x 30ft", widthInches: 2, lengthFeet: 30 },
+                    { id: "fab_2_150", text: "Deacon Rocket Fabric 2in x 150ft", widthInches: 2, lengthFeet: 150 },
+                    { id: "fab_4_10", text: "Deacon Rocket Fabric 4in x 10ft", widthInches: 4, lengthFeet: 10 },
+                    { id: "fab_4_15", text: "Deacon Rocket Fabric 4in x 15ft", widthInches: 4, lengthFeet: 15 },
+                    { id: "fab_4_30", text: "Deacon Rocket Fabric 4in x 30ft", widthInches: 4, lengthFeet: 30 },
+                    { id: "fab_4_150", text: "Deacon Rocket Fabric 4in x 150ft", widthInches: 4, lengthFeet: 150 },
+                    { id: "fab_6_10", text: "Deacon Rocket Fabric 6in x 10ft", widthInches: 6, lengthFeet: 10 },
+                    { id: "fab_6_15", text: "Deacon Rocket Fabric 6in x 15ft", widthInches: 6, lengthFeet: 15 },
+                    { id: "fab_6_30", text: "Deacon Rocket Fabric 6in x 30ft", widthInches: 6, lengthFeet: 30 },
+                    { id: "fab_6_150", text: "Deacon Rocket Fabric 6in x 150ft", widthInches: 6, lengthFeet: 150 },
+                    { id: "fab_12_10", text: "Deacon Rocket Fabric 12in x 10ft", widthInches: 12, lengthFeet: 10 },
+                    { id: "fab_12_15", text: "Deacon Rocket Fabric 12in x 15ft", widthInches: 12, lengthFeet: 15 },
+                    { id: "fab_12_30", text: "Deacon Rocket Fabric 12in x 30ft", widthInches: 12, lengthFeet: 30 },
+                    { id: "fab_12_150", text: "Deacon Rocket Fabric 12in x 150ft", widthInches: 12, lengthFeet: 150 },
+                    { id: "fab_24_10", text: "Deacon Rocket Fabric 24in x 10ft", widthInches: 24, lengthFeet: 10 },
+                    { id: "fab_24_15", text: "Deacon Rocket Fabric 24in x 15ft", widthInches: 24, lengthFeet: 15 },
+                    { id: "fab_24_30", text: "Deacon Rocket Fabric 24in x 30ft", widthInches: 24, lengthFeet: 30 },
+                    { id: "fab_24_150", text: "Deacon Rocket Fabric 24in x 150ft", widthInches: 24, lengthFeet: 150 }
+                ].map(roll => ({ ...roll, area_sqm: (roll.widthInches * INCH_TO_METER) * (roll.lengthFeet * FEET_TO_METER) }))
+            },
+            primer: {
+                name: "Deacon Rocket Primer",
+                types: [ 
+                    { id: "rocket_primer_kit_std", text: "Deacon Rocket Primer Kit (Estándar)" },
+                    { id: "rocket_primer_custom", text: "Otro Tamaño/Presentación" }
+                ]
+            },
+            saturant: {
+                name: "Deacon Rocket Saturant",
+                types: [ 
+                    { id: "rocket_saturant_kit_std", text: "Deacon Rocket Saturant Kit (Estándar)" },
+                    { id: "rocket_saturant_custom", text: "Otro Tamaño/Presentación" }
+                ]
+            },
+            filler: {
+                name: "Deacon Rocket Filler",
+                types: [ 
+                    { id: "rocket_filler_kit_std", text: "Deacon Rocket Filler Kit (Estándar)" },
+                    { id: "rocket_filler_custom", text: "Otro Tamaño/Presentación" }
+                ]
+            },
+            uv_top_coat: { // Nuevo producto
+                name: "Deacon UV Top Coat",
+                types: [
+                    { id: "uv_top_coat_std", text: "Deacon UV Top Coat (Estándar)" }
+                ]
+            },
+            repair_kit: { // Nuevo producto
+                name: "Deacon Rocket Repair Kit",
+                types: [
+                    { id: "repair_kit_std", text: "Deacon Rocket Repair Kit (Estándar)" }
+                ]
+            },
+            diamond_putty: { // Nuevo producto
+                name: "Deacon Diamond Putty",
+                types: [
+                    { id: "diamond_putty_stick", text: "Deacon Diamond Putty (Stick)" }
+                ]
+            },
+            booster_kit: { // Nuevo producto
+                name: "Deacon Booster Kit",
+                types: [
+                    { id: "booster_kit_std", text: "Deacon Booster Kit (Estándar)" }
+                ]
+            },
+            jacket_wrap: { // Nuevo producto
+                name: "Deacon Jacket Wrap",
+                types: [
+                    { id: "jacket_wrap_roll", text: "Deacon Jacket Wrap (Rollo Estándar)" }
+                ]
+            }
+        };
+        
+        const laborRateFactors = { ordinary: 1, nightWork: 0.35, extraDay: 1.25, extraNight: 1.75, holidayExtraDay: 2.00, holidayExtraNight: 2.50, sundayHabitual: 0.75 };
+        const workerSalaryTable = [
+            { category: "AYUDANTE CAMPO", baseSalaryCOP: 1800000, transportAidCOP: 162000 }, 
+            { category: "OFICIAL OBRA CIVIL", baseSalaryCOP: 2200000, transportAidCOP: 162000 },
+            { category: "OFICIAL TUBERO", baseSalaryCOP: 2500000, transportAidCOP: 162000 },
+            { category: "OFICIAL SOLDADOR", baseSalaryCOP: 2800000, transportAidCOP: 162000 },
+            { category: "SUPERVISOR", baseSalaryCOP: 3500000, transportAidCOP: 0 },
+        ];
+
+        // --- Selectores del DOM ---
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const materialTabButtons = document.querySelectorAll('.material-tab-button');
+        const materialTabContents = document.querySelectorAll('.material-tab-content');
+        const componentsContainer = document.getElementById('components-container');
+        const addComponentBtn = document.getElementById('add-component-btn');
+        const pipeComponentTemplate = document.getElementById('pipe-component-template');
+        
+        const fabricRollsContainer = document.getElementById('fabric-rolls-container');
+        const addFabricRollBtn = document.getElementById('add-fabric-roll-btn');
+        const primerKitsContainer = document.getElementById('primer-kits-container');
+        const addPrimerKitBtn = document.getElementById('add-primer-kit-btn');
+        const saturantKitsContainer = document.getElementById('saturant-kits-container');
+        const addSaturantKitBtn = document.getElementById('add-saturant-kit-btn');
+        const fillerKitsContainer = document.getElementById('filler-kits-container');
+        const addFillerKitBtn = document.getElementById('add-filler-kit-btn');
+        // Nuevos selectores de contenedores y botones para materiales adicionales
+        const uvTopCoatItemsContainer = document.getElementById('uv-top-coat-items-container');
+        const addUvTopCoatBtn = document.getElementById('add-uv-top-coat-btn');
+        const repairKitItemsContainer = document.getElementById('repair-kit-items-container');
+        const addRepairKitBtn = document.getElementById('add-repair-kit-btn');
+        const diamondPuttyItemsContainer = document.getElementById('diamond-putty-items-container');
+        const addDiamondPuttyBtn = document.getElementById('add-diamond-putty-btn');
+        const boosterKitItemsContainer = document.getElementById('booster-kit-items-container');
+        const addBoosterKitBtn = document.getElementById('add-booster-kit-btn');
+        const jacketWrapItemsContainer = document.getElementById('jacket-wrap-items-container');
+        const addJacketWrapBtn = document.getElementById('add-jacket-wrap-btn');
+
+        const materialItemTemplate = document.getElementById('material-item-template');
+        const laborEntriesContainer = document.getElementById('labor-entries-container');
+        const addLaborEntryBtn = document.getElementById('add-labor-entry-btn');
+        const laborEntryTemplate = document.getElementById('labor-entry-template');
+        const safetyItemsContainer = document.getElementById('safety-items-container');
+        const addSafetyItemBtn = document.getElementById('add-safety-item-btn');
+        const equipmentRentalItemsContainer = document.getElementById('equipment-rental-items-container');
+        const addEquipmentRentalItemBtn = document.getElementById('add-equipment-rental-item-btn');
+        const consumablesItemsContainer = document.getElementById('consumables-items-container');
+        const addConsumableItemBtn = document.getElementById('add-consumable-item-btn');
+        const genericItemTemplate = document.getElementById('generic-item-template');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const exportExcelBtn = document.getElementById('export-excel-btn');
+        const totalSurfaceAreaEl = document.getElementById('total-surface-area');
+        const resultsFabricAreaRequiredEl = document.getElementById('results-fabric-area-required');
+        const accessoryAreaNoteEl = document.getElementById('accessory-area-note');
+        const totalMaterialCostEl = document.getElementById('total-material-cost');
+        const materialCostDetailsEl = document.getElementById('material-cost-details');
+        const materialCostNoteEl = document.getElementById('material-cost-note');
+        const totalLaborCostEl = document.getElementById('total-labor-cost');
+        const laborCostDetailsEl = document.getElementById('labor-cost-details');
+        const totalSafetyCostEl = document.getElementById('total-safety-cost');
+        const safetyCostDetailsEl = document.getElementById('safety-cost-details');
+        const totalEquipmentRentalCostEl = document.getElementById('total-equipment-rental-cost');
+        const equipmentRentalCostDetailsEl = document.getElementById('equipment-rental-cost-details');
+        const totalConsumablesCostEl = document.getElementById('total-consumables-cost');
+        const consumablesCostDetailsEl = document.getElementById('consumables-cost-details');
+        const grandTotalCostEl = document.getElementById('grand-total-cost');
+        const totalFabricAreaRequiredDisplay = document.getElementById('total-fabric-area-required');
+
+        let componentCounter = 0;
+        let laborEntryCounter = 0;
+
+        // --- Lógica de Pestañas ---
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const targetTab = button.dataset.tab;
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === `${targetTab}-tab`) {
+                        content.classList.add('active');
+                    }
+                });
+                if (targetTab === 'results') { performCalculations(); }
+            });
+        });
+        materialTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                materialTabButtons.forEach(btn => {
+                    btn.classList.remove('active-material-tab', 'text-indigo-600', 'border-indigo-500', 'text-purple-600', 'border-purple-500', 'text-pink-600', 'border-pink-500', 'text-gray-600', 'border-gray-500', 'text-teal-600', 'border-teal-500', 'text-orange-600', 'border-orange-500');
+                    btn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                });
+                // Determinar el color activo basado en la pestaña
+                const tabId = button.dataset.materialTab;
+                let activeColorClasses = ['text-indigo-600', 'border-indigo-500']; // Default
+                if (tabId === 'primer-content') activeColorClasses = ['text-green-600', 'border-green-500'];
+                else if (tabId === 'saturant-content') activeColorClasses = ['text-sky-600', 'border-sky-500'];
+                else if (tabId === 'filler-content') activeColorClasses = ['text-yellow-600', 'border-yellow-500'];
+                else if (tabId === 'uv-top-coat-content') activeColorClasses = ['text-purple-600', 'border-purple-500'];
+                else if (tabId === 'repair-kit-content') activeColorClasses = ['text-pink-600', 'border-pink-500'];
+                else if (tabId === 'diamond-putty-content') activeColorClasses = ['text-gray-700', 'border-gray-600'];
+                else if (tabId === 'booster-kit-content') activeColorClasses = ['text-teal-600', 'border-teal-500'];
+                else if (tabId === 'jacket-wrap-content') activeColorClasses = ['text-orange-600', 'border-orange-500'];
+                
+                button.classList.add('active-material-tab', ...activeColorClasses);
+                button.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                
+                const targetMaterialTab = button.dataset.materialTab;
+                materialTabContents.forEach(content => {
+                    content.classList.remove('active-material-content');
+                    if (content.id === targetMaterialTab) { content.classList.add('active-material-content'); }
+                });
+            });
+        });
+
+        // --- Funciones para Agregar y Quitar Elementos Dinámicos ---
+        function addPipeComponent() {
+            componentCounter++;
+            const templateNode = pipeComponentTemplate.content.cloneNode(true);
+            const componentCard = templateNode.querySelector('.component-card');
+            componentCard.dataset.id = `component-${componentCounter}`;
+            componentCard.querySelector('.component-number').textContent = componentCounter;
+            const componentTypeSelect = componentCard.querySelector('.component-type');
+            const straightPipeDims = componentCard.querySelectorAll('.straight-pipe-dims');
+            const accessoryInputs = componentCard.querySelector('.accessory-inputs');
+            componentTypeSelect.addEventListener('change', (e) => {
+                const isStraight = e.target.value === 'straight';
+                straightPipeDims.forEach(div => div.classList.toggle('hidden', !isStraight));
+                accessoryInputs.classList.toggle('hidden', isStraight);
+                calculateTotalFabricAreaRequired();
+            });
+            componentCard.querySelectorAll('.component-diameter, .component-length, .component-accessory-area, .component-layers').forEach(input => {
+                input.addEventListener('input', calculateTotalFabricAreaRequired);
+            });
+            const removeBtn = componentCard.querySelector('.remove-component-btn');
+            removeBtn.addEventListener('click', () => {
+                componentCard.remove();
+                calculateTotalFabricAreaRequired();
+            });
+            componentsContainer.appendChild(templateNode);
+            const isStraightInitial = componentTypeSelect.value === 'straight';
+            straightPipeDims.forEach(div => div.classList.toggle('hidden', !isStraightInitial));
+            accessoryInputs.classList.toggle('hidden', isStraightInitial);
+            calculateTotalFabricAreaRequired();
+        }
+        function addMaterialItem(container, productTypeKey) {
+            const templateNode = materialItemTemplate.content.cloneNode(true);
+            const materialItemDiv = templateNode.querySelector('.material-item');
+            const sizeSelect = materialItemDiv.querySelector('.material-size');
+            let optionsSource = deaconProducts[productTypeKey]?.rolls || deaconProducts[productTypeKey]?.types || [];
+            optionsSource.forEach(opt => {
+                const optionEl = document.createElement('option');
+                optionEl.value = opt.id; optionEl.textContent = opt.text;
+                sizeSelect.appendChild(optionEl);
+            });
+            const removeBtn = materialItemDiv.querySelector('.remove-material-item-btn');
+            removeBtn.addEventListener('click', () => materialItemDiv.remove());
+            container.appendChild(templateNode);
+        }
+        function addGenericItem(container) {
+            const templateNode = genericItemTemplate.content.cloneNode(true);
+            const itemEntryCard = templateNode.querySelector('.item-entry-card');
+            const removeBtn = itemEntryCard.querySelector('.remove-generic-item-btn');
+            removeBtn.addEventListener('click', () => itemEntryCard.remove());
+            container.appendChild(templateNode);
+        }
+        function addLaborEntry() {
+            laborEntryCounter++;
+            const templateNode = laborEntryTemplate.content.cloneNode(true);
+            const laborCard = templateNode.querySelector('.labor-entry-card');
+            laborCard.dataset.id = `labor-${laborEntryCounter}`;
+            laborCard.querySelector('.labor-entry-number').textContent = laborEntryCounter;
+            const categorySelect = laborCard.querySelector('.labor-worker-category');
+            workerSalaryTable.forEach(worker => {
+                const option = document.createElement('option');
+                option.value = worker.category;
+                option.textContent = worker.category;
+                categorySelect.appendChild(option);
+            });
+            const removeBtn = laborCard.querySelector('.remove-labor-entry-btn');
+            removeBtn.addEventListener('click', () => {
+                laborCard.remove();
+            });
+            laborEntriesContainer.appendChild(templateNode);
+        }
+
+        // --- Inicialización ---
+        function initializeApp() {
+            addPipeComponent(); 
+            addLaborEntry(); 
+        }
+
+        // --- Lógica de Cálculo ---
+        function calculateComponentSurfaceArea(componentCard) {
+            const type = componentCard.querySelector('.component-type').value;
+            const layers = parseFloat(componentCard.querySelector('.component-layers').value) || 1;
+            let surfaceArea = 0;
+            if (type === 'straight') {
+                const diameterInches = parseFloat(componentCard.querySelector('.component-diameter').value);
+                const lengthMeters = parseFloat(componentCard.querySelector('.component-length').value);
+                if (!isNaN(diameterInches) && !isNaN(lengthMeters) && diameterInches > 0 && lengthMeters > 0) {
+                    surfaceArea = PI * (diameterInches * INCH_TO_METER) * lengthMeters;
+                }
+            } else { 
+                const accessoryArea = parseFloat(componentCard.querySelector('.component-accessory-area').value);
+                if (!isNaN(accessoryArea) && accessoryArea > 0) { surfaceArea = accessoryArea; }
+            }
+            return surfaceArea * layers;
+        }
+        function calculateTotalFabricAreaRequired() {
+            let totalArea = 0;
+            let hasAccessories = false;
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                totalArea += calculateComponentSurfaceArea(card);
+                if (card.querySelector('.component-type').value !== 'straight') { hasAccessories = true; }
+            });
+            totalFabricAreaRequiredDisplay.textContent = `${totalArea.toFixed(2)} m²`;
+            resultsFabricAreaRequiredEl.textContent = `Área tej. req: ${totalArea.toFixed(2)} m²`;
+            accessoryAreaNoteEl.textContent = hasAccessories ? "(Incluye área de accesorios ingresada manualmente)" : "";
+            return totalArea;
+        }
+        function performCalculations() {
+            let totalSurfaceArea = 0;
+            let totalFabricAreaForComponents = 0;
+            let hasAccessories = false;
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                const area = calculateComponentSurfaceArea(card);
+                totalSurfaceArea += area; 
+                totalFabricAreaForComponents += area;
+                 if (card.querySelector('.component-type').value !== 'straight') { hasAccessories = true; }
+            });
+            totalSurfaceAreaEl.textContent = `${totalSurfaceArea.toFixed(2)} m²`;
+            resultsFabricAreaRequiredEl.textContent = `Área tej. req: ${totalFabricAreaForComponents.toFixed(2)} m²`;
+            accessoryAreaNoteEl.textContent = hasAccessories ? "(Incluye área de accesorios ingresada manualmente)" : "";
+
+            let totalMaterialCost = 0;
+            let materialDetailsHTML = "";
+            function calculateMaterialTypeCost(containerSelector, name) {
+                let cost = 0;
+                // Verificar si el contenedor existe antes de intentar seleccionarlo
+                const container = (typeof containerSelector === 'string') ? document.querySelector(containerSelector) : containerSelector;
+                if (container) {
+                    container.querySelectorAll('.material-item').forEach(item => {
+                        const quantity = parseFloat(item.querySelector('.material-quantity').value) || 0;
+                        const price = parseFloat(item.querySelector('.material-price').value) || 0;
+                        cost += quantity * price;
+                    });
+                }
+                if (cost > 0) materialDetailsHTML += `<div>${name}: $${cost.toFixed(2)}</div>`;
+                totalMaterialCost += cost;
+            }
+            calculateMaterialTypeCost(fabricRollsContainer, deaconProducts.fabric.name);
+            calculateMaterialTypeCost(primerKitsContainer, deaconProducts.primer.name);
+            calculateMaterialTypeCost(saturantKitsContainer, deaconProducts.saturant.name);
+            calculateMaterialTypeCost(fillerKitsContainer, deaconProducts.filler.name);
+            calculateMaterialTypeCost(uvTopCoatItemsContainer, deaconProducts.uv_top_coat.name);
+            calculateMaterialTypeCost(repairKitItemsContainer, deaconProducts.repair_kit.name);
+            calculateMaterialTypeCost(diamondPuttyItemsContainer, deaconProducts.diamond_putty.name);
+            calculateMaterialTypeCost(boosterKitItemsContainer, deaconProducts.booster_kit.name);
+            calculateMaterialTypeCost(jacketWrapItemsContainer, deaconProducts.jacket_wrap.name);
+
+            totalMaterialCostEl.textContent = `$${totalMaterialCost.toFixed(2)}`;
+            materialCostDetailsEl.innerHTML = materialDetailsHTML || "<span>Sin detalles</span>";
+            materialCostNoteEl.textContent = totalFabricAreaForComponents > 0 ? `Basado en ${totalFabricAreaForComponents.toFixed(2)} m² de tejido req.` : "";
+            
+            let totalLaborCost = 0;
+            let laborDetailsHTML = "";
+            laborEntriesContainer.querySelectorAll('.labor-entry-card').forEach(entryCard => {
+                const selectedWorkerCategory = entryCard.querySelector('.labor-worker-category').value;
+                const numPeople = parseInt(entryCard.querySelector('.labor-quantity').value) || 1;
+                const workerData = workerSalaryTable.find(w => w.category === selectedWorkerCategory);
+                let entryLaborCost = 0;
+
+                if (workerData) {
+                    const monthlySalary = workerData.baseSalaryCOP;
+                    const hourlyRateCOP = monthlySalary / 240; 
+                    const hours = {
+                        ordinary: parseFloat(entryCard.querySelector('.labor-ordinary-hours').value) || 0,
+                        nightWork: parseFloat(entryCard.querySelector('.labor-night-work-hours').value) || 0,
+                        extraDay: parseFloat(entryCard.querySelector('.labor-extra-day-hours').value) || 0,
+                        extraNight: parseFloat(entryCard.querySelector('.labor-extra-night-hours').value) || 0,
+                        holidayExtraDay: parseFloat(entryCard.querySelector('.labor-holiday-extra-day-hours').value) || 0,
+                        holidayExtraNight: parseFloat(entryCard.querySelector('.labor-holiday-extra-night-hours').value) || 0,
+                        sundayHabitual: parseFloat(entryCard.querySelector('.labor-sunday-habitual-hours').value) || 0,
+                    };
+                    let costForOnePerson = 0;
+                    costForOnePerson += hours.ordinary * hourlyRateCOP * laborRateFactors.ordinary;
+                    costForOnePerson += hours.nightWork * hourlyRateCOP * laborRateFactors.nightWork; 
+                    costForOnePerson += hours.extraDay * hourlyRateCOP * laborRateFactors.extraDay; 
+                    costForOnePerson += hours.extraNight * hourlyRateCOP * laborRateFactors.extraNight; 
+                    costForOnePerson += hours.holidayExtraDay * hourlyRateCOP * laborRateFactors.holidayExtraDay; 
+                    costForOnePerson += hours.holidayExtraNight * hourlyRateCOP * laborRateFactors.holidayExtraNight; 
+                    costForOnePerson += hours.sundayHabitual * hourlyRateCOP * laborRateFactors.sundayHabitual; 
+                    const daysWorked = parseFloat(entryCard.querySelector('.labor-days-worked').value) || 0;
+                    const dailyTransportAid = workerData.transportAidCOP / 30; 
+                    const transportCostForOnePerson = daysWorked * dailyTransportAid;
+                    costForOnePerson += transportCostForOnePerson;
+                    entryLaborCost = costForOnePerson * numPeople;
+                    totalLaborCost += entryLaborCost;
+                    laborDetailsHTML += `<div class="border-t pt-1 mt-1"><strong>${numPeople}x ${selectedWorkerCategory}: $${entryLaborCost.toFixed(2)}</strong> (Hora: $${hourlyRateCOP.toFixed(2)})</div>`;
+                }
+            });
+            totalLaborCostEl.textContent = `$${totalLaborCost.toFixed(2)}`;
+            laborCostDetailsEl.innerHTML = laborDetailsHTML || "<span>Sin personal agregado</span>";
+
+            let totalSafetyCost = 0;
+            let safetyDetailsHTML = "";
+            safetyItemsContainer.querySelectorAll('.item-entry-card').forEach(item => {
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const description = item.querySelector('.item-description').value || "Item";
+                const itemCost = quantity * price;
+                if (itemCost > 0) safetyDetailsHTML += `<div>${description} (x${quantity}): $${itemCost.toFixed(2)}</div>`;
+                totalSafetyCost += itemCost;
+            });
+            totalSafetyCostEl.textContent = `$${totalSafetyCost.toFixed(2)}`;
+            safetyCostDetailsEl.innerHTML = safetyDetailsHTML || "<span>Sin items</span>";
+
+            let totalEquipmentRentalCost = 0;
+            let equipmentDetailsHTML = "";
+            equipmentRentalItemsContainer.querySelectorAll('.item-entry-card').forEach(item => {
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const description = item.querySelector('.item-description').value || "Equipo";
+                const itemCost = quantity * price;
+                if (itemCost > 0) equipmentDetailsHTML += `<div>${description} (x${quantity}): $${itemCost.toFixed(2)}</div>`;
+                totalEquipmentRentalCost += itemCost;
+            });
+            totalEquipmentRentalCostEl.textContent = `$${totalEquipmentRentalCost.toFixed(2)}`;
+            equipmentRentalCostDetailsEl.innerHTML = equipmentDetailsHTML || "<span>Sin items</span>";
+
+            let totalConsumablesCost = 0;
+            let consumablesDetailsHTML = "";
+            consumablesItemsContainer.querySelectorAll('.item-entry-card').forEach(item => {
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const description = item.querySelector('.item-description').value || "Consumible";
+                const itemCost = quantity * price;
+                if (itemCost > 0) consumablesDetailsHTML += `<div>${description} (x${quantity}): $${itemCost.toFixed(2)}</div>`;
+                totalConsumablesCost += itemCost;
+            });
+            totalConsumablesCostEl.textContent = `$${totalConsumablesCost.toFixed(2)}`;
+            consumablesCostDetailsEl.innerHTML = consumablesDetailsHTML || "<span>Sin items</span>";
+
+            const grandTotal = totalMaterialCost + totalLaborCost + totalSafetyCost + totalEquipmentRentalCost + totalConsumablesCost;
+            grandTotalCostEl.textContent = `$${grandTotal.toFixed(2)}`;
+        }
+
+        // --- Exportar a Excel ---
+        function exportToExcel() {
+            performCalculations(); 
+            const wb = XLSX.utils.book_new();
+
+            const headerStyle = { font: { bold: true }, fill: { fgColor: { rgb: "FFFFAA00" } } }; 
+            const totalStyle = { font: { bold: true }, fill: { fgColor: { rgb: "FFCCFFCC" } } }; 
+
+            const summarySheetName = "Resumen Costos";
+            const summaryData = [
+                [{v: "Concepto", s: headerStyle}, {v: "Costo Estimado (COP)", s: headerStyle}],
+                ["Área de Superficie Total (m²)"], 
+                ["Área de Tejido Requerida (m²)"], 
+                ["Costo Total de Materiales DEACON"], 
+                ["Costo Total de Mano de Obra"], 
+                ["Costo Total de Seguridad Industrial"], 
+                ["Costo Total de Arrendamiento de Equipos"], 
+                ["Costo Total de Consumibles"], 
+                [{v: "COSTO TOTAL ESTIMADO DEL PROYECTO", s: totalStyle}] 
+            ];
+            summaryData[1][1] = {t:'n', v: parseFloat(totalSurfaceAreaEl.textContent.replace(/[^\d.-]/g, '')) || 0, z: '#,##0.00 "m²"'};
+            summaryData[2][1] = {t:'n', v: parseFloat(resultsFabricAreaRequiredEl.textContent.replace(/[^\d.-]/g, '')) || 0, z: '#,##0.00 "m²"'};
+            summaryData[3][1] = {t:'n', v: parseFloat(totalMaterialCostEl.textContent.replace(/[^\d$.]/g, '')) || 0, z: '$#,##0.00'};
+            summaryData[4][1] = {t:'n', v: parseFloat(totalLaborCostEl.textContent.replace(/[^\d$.]/g, '')) || 0, z: '$#,##0.00'};
+            summaryData[5][1] = {t:'n', v: parseFloat(totalSafetyCostEl.textContent.replace(/[^\d$.]/g, '')) || 0, z: '$#,##0.00'};
+            summaryData[6][1] = {t:'n', v: parseFloat(totalEquipmentRentalCostEl.textContent.replace(/[^\d$.]/g, '')) || 0, z: '$#,##0.00'};
+            summaryData[7][1] = {t:'n', v: parseFloat(totalConsumablesCostEl.textContent.replace(/[^\d$.]/g, '')) || 0, z: '$#,##0.00'};
+            summaryData[8][1] = {t:'n', f: 'SUM(B4:B8)', z: '$#,##0.00', s: totalStyle};
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            wsSummary['!cols'] = [{wch:40}, {wch:25}];
+            XLSX.utils.book_append_sheet(wb, wsSummary, summarySheetName);
+
+            const componentsSheetName = "Componentes Tuberia";
+            const componentsHeader = ["#", "Tipo", "Diámetro (pulg)", "Longitud (m)", "Área Acc. (m²)", "Capas Tejido", "Área Superficial Requerida (m²)"]
+                .map(h => ({v: h, s: headerStyle}));
+            const componentsData = [componentsHeader];
+            document.querySelectorAll('#components-container .component-card').forEach((card, index) => {
+                const type = card.querySelector('.component-type option:checked').textContent;
+                const diameter = parseFloat(card.querySelector('.component-diameter').value) || 0;
+                const length = parseFloat(card.querySelector('.component-length').value) || 0;
+                const accArea = parseFloat(card.querySelector('.component-accessory-area').value) || 0;
+                const layers = parseInt(card.querySelector('.component-layers').value) || 1;
+                const surfAreaWithLayers = parseFloat(calculateComponentSurfaceArea(card).toFixed(3)) || 0;
+                componentsData.push([
+                    index + 1, type, 
+                    {t:'n', v: diameter, z: '#,##0.00'}, {t:'n', v: length, z: '#,##0.00'}, 
+                    {t:'n', v: accArea, z: '#,##0.00'}, {t:'n', v: layers, z: '#,##0'}, 
+                    {t:'n', v: surfAreaWithLayers, z: '#,##0.000'}
+                ]);
+            });
+            const wsComponents = XLSX.utils.aoa_to_sheet(componentsData);
+            wsComponents['!cols'] = [{wch:5}, {wch:20}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:25}];
+            XLSX.utils.book_append_sheet(wb, wsComponents, componentsSheetName);
+            
+            const materialsSheetName = "Materiales DEACON";
+            const materialsHeader = ["Tipo Material", "Tamaño/ID Producto", "Cantidad", "Precio Unitario (COP)", "Costo Total (COP)"]
+                .map(h => ({v: h, s: headerStyle}));
+            const materialsData = [materialsHeader];
+            let materialRowCounter = 2; 
+            function addMaterialRowsToExcel(container, materialProductObject) {
+                if (!container) return; // Si el contenedor no existe, no hacer nada
+                container.querySelectorAll('.material-item').forEach(item => {
+                    const sizeSelectedValue = item.querySelector('.material-size').value;
+                    const selectedOption = (materialProductObject.rolls || materialProductObject.types).find(opt => opt.id === sizeSelectedValue);
+                    const sizeText = selectedOption ? selectedOption.text : 'N/A';
+                    const quantity = parseFloat(item.querySelector('.material-quantity').value) || 0;
+                    const price = parseFloat(item.querySelector('.material-price').value) || 0;
+                    const totalCost = quantity * price;
+                    materialsData.push([
+                        materialProductObject.name, sizeText, 
+                        {t:'n', v: quantity, z: '#,##0'}, {t:'n', v: price, z: '$#,##0.00'}, 
+                        {t:'n', v: totalCost, z: '$#,##0.00', f: `C${materialRowCounter}*D${materialRowCounter}`}
+                    ]);
+                    materialRowCounter++;
+                });
+            }
+            addMaterialRowsToExcel(fabricRollsContainer, deaconProducts.fabric);
+            addMaterialRowsToExcel(primerKitsContainer, deaconProducts.primer);
+            addMaterialRowsToExcel(saturantKitsContainer, deaconProducts.saturant);
+            addMaterialRowsToExcel(fillerKitsContainer, deaconProducts.filler);
+            addMaterialRowsToExcel(uvTopCoatItemsContainer, deaconProducts.uv_top_coat);
+            addMaterialRowsToExcel(repairKitItemsContainer, deaconProducts.repair_kit);
+            addMaterialRowsToExcel(diamondPuttyItemsContainer, deaconProducts.diamond_putty);
+            addMaterialRowsToExcel(boosterKitItemsContainer, deaconProducts.booster_kit);
+            addMaterialRowsToExcel(jacketWrapItemsContainer, deaconProducts.jacket_wrap);
+
+            if (materialRowCounter > 2) { 
+                 materialsData.push([
+                    {v: "TOTAL MATERIALES", s: totalStyle}, "", "", "", 
+                    {t:'n', f: `SUM(E2:E${materialRowCounter-1})`, z: '$#,##0.00', s: totalStyle}
+                ]);
+            }
+            const wsMaterials = XLSX.utils.aoa_to_sheet(materialsData);
+            wsMaterials['!cols'] = [{wch:30}, {wch:30}, {wch:10}, {wch:20}, {wch:20}];
+            XLSX.utils.book_append_sheet(wb, wsMaterials, materialsSheetName);
+
+            const laborSheetName = "Mano de Obra Detalle";
+            const laborHeader = ["# Entrada", "Categoría Trabajador", "Cantidad Personas", "Días Transporte", "H. Ordinarias", "H. Nocturnas (Recargo)", "H. Ext. Diurnas", "H. Ext. Nocturnas", "H. Ext. Fest. Diu.", "H. Ext. Fest. Noc.", "H. Dom. Habitual (Recargo)", "Subtotal Costo (COP)"]
+                .map(h => ({v: h, s: headerStyle}));
+            const laborExcelData = [laborHeader];
+            let totalLaborCostForExcel = 0;
+            let laborRowCounter = 2;
+            document.querySelectorAll('#labor-entries-container .labor-entry-card').forEach((card, index) => {
+                const category = card.querySelector('.labor-worker-category').value;
+                const numPeople = parseFloat(card.querySelector('.labor-quantity').value) || 0;
+                const daysWorked = parseFloat(card.querySelector('.labor-days-worked').value) || 0;
+                const ordHours = parseFloat(card.querySelector('.labor-ordinary-hours').value) || 0;
+                const nightHours = parseFloat(card.querySelector('.labor-night-work-hours').value) || 0;
+                const extDayHours = parseFloat(card.querySelector('.labor-extra-day-hours').value) || 0;
+                const extNightHours = parseFloat(card.querySelector('.labor-extra-night-hours').value) || 0;
+                const holDayHours = parseFloat(card.querySelector('.labor-holiday-extra-day-hours').value) || 0;
+                const holNightHours = parseFloat(card.querySelector('.labor-holiday-extra-night-hours').value) || 0;
+                const sunHours = parseFloat(card.querySelector('.labor-sunday-habitual-hours').value) || 0;
+                let entrySubtotal = 0;
+                const workerData = workerSalaryTable.find(w => w.category === category);
+                if (workerData) {
+                    const monthlySalary = workerData.baseSalaryCOP;
+                    const hourlyRateCOP = monthlySalary / 240;
+                    let costForOnePerson = 0;
+                    costForOnePerson += ordHours * hourlyRateCOP * laborRateFactors.ordinary;
+                    costForOnePerson += nightHours * hourlyRateCOP * laborRateFactors.nightWork;
+                    costForOnePerson += extDayHours * hourlyRateCOP * laborRateFactors.extraDay;
+                    costForOnePerson += extNightHours * hourlyRateCOP * laborRateFactors.extraNight;
+                    costForOnePerson += holDayHours * hourlyRateCOP * laborRateFactors.holidayExtraDay;
+                    costForOnePerson += holNightHours * hourlyRateCOP * laborRateFactors.holidayExtraNight;
+                    costForOnePerson += sunHours * hourlyRateCOP * laborRateFactors.sundayHabitual;
+                    const dailyTransportAid = workerData.transportAidCOP / 30;
+                    costForOnePerson += daysWorked * dailyTransportAid;
+                    entrySubtotal = costForOnePerson * numPeople;
+                    totalLaborCostForExcel += entrySubtotal;
+                }
+                laborExcelData.push([
+                    index + 1, category, 
+                    {t:'n', v:numPeople, z:'#,##0'}, {t:'n', v:daysWorked, z:'#,##0'}, 
+                    {t:'n', v:ordHours, z:'#,##0.00'}, {t:'n', v:nightHours, z:'#,##0.00'}, 
+                    {t:'n', v:extDayHours, z:'#,##0.00'}, {t:'n', v:extNightHours, z:'#,##0.00'}, 
+                    {t:'n', v:holDayHours, z:'#,##0.00'}, {t:'n', v:holNightHours, z:'#,##0.00'}, 
+                    {t:'n', v:sunHours, z:'#,##0.00'},
+                    {t:'n', v: entrySubtotal, z: '$#,##0.00'}
+                ]);
+                laborRowCounter++;
+            });
+             if (laborRowCounter > 2) {
+                laborExcelData.push([
+                    "", "", "", "", "", "", "", "", "", "", 
+                    {v: "TOTAL MANO DE OBRA:", s: totalStyle}, 
+                    {t:'n', f: `SUM(L2:L${laborRowCounter-1})`, z: '$#,##0.00', s: totalStyle}
+                ]);
+            }
+            const wsLabor = XLSX.utils.aoa_to_sheet(laborExcelData);
+            wsLabor['!cols'] = Array(12).fill(null).map((_,i) => ({wch: (i === 1 ? 25 : 15)}));
+            XLSX.utils.book_append_sheet(wb, wsLabor, laborSheetName);
+
+            function addGenericItemsToSheet(containerId, sheetName, columnForTotal) {
+                const itemsHeader = ["Descripción", "Cantidad", "Precio Unitario (COP)", "Costo Total (COP)"]
+                    .map(h => ({v: h, s: headerStyle}));
+                const itemsData = [itemsHeader];
+                let itemRowCounter = 2;
+                document.querySelectorAll(`${containerId} .item-entry-card`).forEach(item => {
+                    const description = item.querySelector('.item-description').value;
+                    const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                    const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                    itemsData.push([
+                        description, 
+                        {t:'n', v: quantity, z: '#,##0'}, {t:'n', v: price, z: '$#,##0.00'}, 
+                        {t:'n', f: `B${itemRowCounter}*C${itemRowCounter}`, z: '$#,##0.00'}
+                    ]);
+                    itemRowCounter++;
+                });
+                if (itemRowCounter > 2) {
+                    itemsData.push([
+                        {v: `TOTAL ${sheetName.toUpperCase()}`, s: totalStyle}, "", "", 
+                        {t:'n', f: `SUM(D2:D${itemRowCounter-1})`, z: '$#,##0.00', s: totalStyle}
+                    ]);
+                    const ws = XLSX.utils.aoa_to_sheet(itemsData);
+                    ws['!cols'] = [{wch:30}, {wch:10}, {wch:20}, {wch:20}];
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                }
+            }
+            addGenericItemsToSheet('#safety-items-container', "Seguridad Industrial", "D");
+            addGenericItemsToSheet('#equipment-rental-items-container', "Arriendo Equipos", "D");
+            addGenericItemsToSheet('#consumables-items-container', "Consumibles", "D");
+
+            XLSX.writeFile(wb, "Estimacion_Costos_Reparacion_Tuberias_v3.xlsx"); // Nombre de archivo actualizado
+        }
+
+        // --- Asignación de Event Listeners ---
+        addComponentBtn.addEventListener('click', addPipeComponent);
+        addFabricRollBtn.addEventListener('click', () => addMaterialItem(fabricRollsContainer, 'fabric'));
+        addPrimerKitBtn.addEventListener('click', () => addMaterialItem(primerKitsContainer, 'primer'));
+        addSaturantKitBtn.addEventListener('click', () => addMaterialItem(saturantKitsContainer, 'saturant'));
+        addFillerKitBtn.addEventListener('click', () => addMaterialItem(fillerKitsContainer, 'filler'));
+        // Listeners para nuevos botones de materiales
+        if (addUvTopCoatBtn) addUvTopCoatBtn.addEventListener('click', () => addMaterialItem(uvTopCoatItemsContainer, 'uv_top_coat'));
+        if (addRepairKitBtn) addRepairKitBtn.addEventListener('click', () => addMaterialItem(repairKitItemsContainer, 'repair_kit'));
+        if (addDiamondPuttyBtn) addDiamondPuttyBtn.addEventListener('click', () => addMaterialItem(diamondPuttyItemsContainer, 'diamond_putty'));
+        if (addBoosterKitBtn) addBoosterKitBtn.addEventListener('click', () => addMaterialItem(boosterKitItemsContainer, 'booster_kit'));
+        if (addJacketWrapBtn) addJacketWrapBtn.addEventListener('click', () => addMaterialItem(jacketWrapItemsContainer, 'jacket_wrap'));
+
+        addLaborEntryBtn.addEventListener('click', addLaborEntry);
+        addSafetyItemBtn.addEventListener('click', () => addGenericItem(safetyItemsContainer));
+        addEquipmentRentalItemBtn.addEventListener('click', () => addGenericItem(equipmentRentalItemsContainer));
+        addConsumableItemBtn.addEventListener('click', () => addGenericItem(consumablesItemsContainer));
+        calculateBtn.addEventListener('click', performCalculations);
+        exportExcelBtn.addEventListener('click', exportToExcel);
+        componentsContainer.addEventListener('input', (event) => {
+            if (event.target.matches('.component-diameter, .component-length, .component-accessory-area, .component-layers')) {
+                calculateTotalFabricAreaRequired();
+            }
+        });
+
+        // --- Inicializar la aplicación ---
+        initializeApp();
+        calculateTotalFabricAreaRequired();
+    });
+    </script>
+</body>
+</html>

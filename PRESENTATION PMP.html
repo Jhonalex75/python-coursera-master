@@ -1,0 +1,119 @@
+// Add this to the <style> section
+.slide-animation {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+// Add interactive elements
+.interactive-element {
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.interactive-element:hover {
+    transform: scale(1.05);
+}
+
+// Add this before the closing </body> tag
+function createQuiz(slideId) {
+    const quizContent = `
+        <div class="quiz-container">
+            <h3>Quick Knowledge Check</h3>
+            <div class="question">
+                <p>What is the most effective form of communication in ME projects?</p>
+                <div class="options">
+                    <button onclick="checkAnswer(this, true)">Face-to-face interaction</button>
+                    <button onclick="checkAnswer(this, false)">Email</button>
+                    <button onclick="checkAnswer(this, false)">Written reports</button>
+                </div>
+            </div>
+        </div>
+    `;
+    return quizContent;
+}
+
+// Add this to your slide content
+<div class="interactive-diagram">
+    <svg id="processDiagram" width="600" height="400">
+        <!-- Add SVG elements here -->
+    </svg>
+    <script>
+        const diagram = document.getElementById('processDiagram');
+        // Add click events to diagram elements
+        diagram.addEventListener('click', (e) => {
+            const element = e.target;
+            element.classList.toggle('highlighted');
+        });
+    </script>
+</div>
+
+function addFeedbackSystem() {
+    const feedbackBtn = document.createElement('button');
+    feedbackBtn.className = 'feedback-button';
+    feedbackBtn.innerHTML = '📝 Give Feedback';
+    feedbackBtn.onclick = () => {
+        const rating = prompt('Rate this slide (1-5):');
+        const comment = prompt('Any comments?');
+        saveFeedback(rating, comment);
+    };
+    return feedbackBtn;
+}
+
+<div class="case-study-container">
+    <h3>Interactive Case Study: ME Project Challenge</h3>
+    <div class="scenario">
+        <p>You're leading a complex machinery design project. The client requests last-minute changes.</p>
+        <div class="decision-points">
+            <button onclick="handleDecision('analyze')">Analyze Impact</button>
+            <button onclick="handleDecision('reject')">Reject Change</button>
+            <button onclick="handleDecision('accept')">Accept Change</button>
+        </div>
+    </div>
+</div>
+
+function updateProgressTracking() {
+    const progress = {
+        completedSlides: currentSlide + 1,
+        totalSlides: totalSlides,
+        quizzesTaken: quizResults.length,
+        interactionsCount: userInteractions
+    };
+    
+    displayProgress(progress);
+}
+
+async function loadDynamicContent(slideId) {
+    const content = await fetch(`/api/slide-content/${slideId}`);
+    const data = await content.json();
+    return createDynamicSlide(data);
+}
+
+function enhanceNavigation() {
+    // Add touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX) changeSlide(1); // Swipe left
+        if (touchEndX > touchStartX) changeSlide(-1); // Swipe right
+    }
+}

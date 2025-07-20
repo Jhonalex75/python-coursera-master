@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimador de Costos de Reparación de Tuberías</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: var(--card-background);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            background-color: var(--card-background);
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border-color);
+            margin: 0 0.5rem;
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .tab-button:hover:not(.active) {
+            background-color: var(--background-color);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .component-card, .results-card, .item-entry-card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .component-card:hover, .results-card:hover, .item-entry-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        .btn {
+            @apply px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2;
+        }
+
+        .btn-primary {
+            @apply hover:shadow-lg transform hover:-translate-y-0.5;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .results-card-small {
+            @apply p-4 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md;
+        }
+
+        .results-card-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-card-small h3 {
+            @apply text-sm font-medium text-gray-600 mb-2;
+        }
+
+        .results-card-small .value {
+            @apply text-2xl font-bold mb-1;
+        }
+
+        .results-card-small .sub-text {
+            @apply text-sm font-medium;
+        }
+
+        .results-card-small .details {
+            @apply mt-2 space-y-1;
+        }
+
+        .total-cost-card {
+            @apply p-6 rounded-lg shadow-md text-white text-center;
+        }
+
+        .total-cost-card h3 {
+            @apply text-lg font-medium mb-2;
+        }
+
+        .total-cost-card p {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .disclaimer {
+            background-color: #fff7ed;
+            border-left: 4px solid var(--warning-color);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .disclaimer h3 {
+            color: var(--warning-color);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .disclaimer ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .disclaimer li {
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .disclaimer li:before {
+            content: "•";
+            color: var(--warning-color);
+            position: absolute;
+            left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .tab-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .results-card-small .value {
+                font-size: 1.5rem;
+            }
+
+            .total-cost-card p {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .results-card-small {
+                @apply p-3;
+            }
+            
+            .results-card-small .value {
+                @apply text-xl;
+            }
+            
+            .total-cost-card {
+                @apply p-4;
+            }
+            
+            .btn {
+                @apply px-4 py-2 text-sm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary-color mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <h1 class="text-4xl font-bold">Estimador de Costos de Reparación de Tuberías</h1>
+            </div>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">Herramienta profesional para estimar costos de reparación utilizando productos DEACON Rocket. Calcule materiales, mano de obra y costos asociados de manera precisa.</p>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-2 mb-8">
+            <button class="tab-button active" data-tab="components">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                1. Componentes
+            </button>
+            <button class="tab-button" data-tab="materials">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                2. Materiales
+            </button>
+            <button class="tab-button" data-tab="labor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                3. Mano de Obra
+            </button>
+            <button class="tab-button" data-tab="safety">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                4. Seguridad
+            </button>
+            <button class="tab-button" data-tab="equipment">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                </svg>
+                5. Equipos y Cons.
+            </button>
+            <button class="tab-button" data-tab="results">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                6. Resultados
+            </button>
+        </nav>
+
+        <div id="tab-content-area">
+            <div id="components-tab" class="tab-content active">
+                <section id="pipe-components-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <h2 class="text-2xl font-semibold">Componentes de Tubería</h2>
+                    </div>
+                    <div id="components-container" class="space-y-4"></div>
+                    <button id="add-component-btn" class="mt-4 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Componente
+                    </button>
+                </section>
+            </div>
+
+            <div id="materials-tab" class="tab-content">
+                <section id="materials-section">
+                     <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        <h2 class="text-2xl font-semibold">Materiales DEACON Rocket</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Ingrese la cantidad y precio de los materiales que planea usar.</p>
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button class="material-tab-button active-material-tab whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500" data-material-tab="fabric-content">Rocket Fabric</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="primer-content">Rocket Primer</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="saturant-content">Rocket Saturant</button>
+                            <button class="material-tab-button whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-material-tab="filler-content">Rocket Filler</button>
+                        </nav>
+                    </div>
+                    <div id="fabric-content" class="material-tab-content active-material-content">
+                        <h3 class="text-xl font-medium text-indigo-700 mb-1">A. Rocket Fabric</h3>
+                        <p class="text-xs text-gray-600 mb-3">Material de refuerzo.</p>
+                        <div class="p-3 bg-indigo-50 rounded-md border border-indigo-200">
+                            <p class="text-sm mb-2">Área total de tejido requerida (calculada): <strong id="total-fabric-area-required" class="text-indigo-700">0.00 m²</strong></p>
+                            <div id="fabric-rolls-container" class="space-y-2"></div>
+                            <button id="add-fabric-roll-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Rollo de Tejido</button>
+                        </div>
+                    </div>
+                    <div id="primer-content" class="material-tab-content"><h3 class="text-xl font-medium text-green-700 mb-1">B. Rocket Primer</h3><p class="text-xs text-gray-600 mb-3">Imprimador.</p><div class="p-3 bg-green-50 rounded-md border border-green-200"><div id="primer-kits-container" class="space-y-2"></div><button id="add-primer-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Primer</button></div></div>
+                    <div id="saturant-content" class="material-tab-content"><h3 class="text-xl font-medium text-sky-700 mb-1">C. Rocket Saturant</h3><p class="text-xs text-gray-600 mb-3">Saturante.</p><div class="p-3 bg-sky-50 rounded-md border border-sky-200"><div id="saturant-kits-container" class="space-y-2"></div><button id="add-saturant-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Saturante</button></div></div>
+                    <div id="filler-content" class="material-tab-content"><h3 class="text-xl font-medium text-yellow-700 mb-1">D. Rocket Filler</h3><p class="text-xs text-gray-600 mb-3">Relleno.</p><div class="p-3 bg-yellow-50 rounded-md border border-yellow-200"><div id="filler-kits-container" class="space-y-2"></div><button id="add-filler-kit-btn" class="mt-2 btn btn-secondary py-1 px-3 text-sm">Agregar Kit de Relleno</button></div></div>
+                </section>
+            </div>
+
+            <div id="labor-tab" class="tab-content">
+                <section id="labor-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                         <h2 class="text-2xl font-semibold">Estimación de Mano de Obra</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Ingrese las horas estimadas y la categoría del trabajador.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div class="input-group"><label for="worker-category" class="block text-sm font-medium">Categoría del Trabajador:</label><select id="worker-category" class="mt-1 block w-full input-field rounded-md shadow-sm p-2"></select></div><div class="input-group"><label for="days-worked" class="block text-sm font-medium">Días Trabajados (transporte):</label><input type="number" id="days-worked" value="0" min="0" class="mt-1 block w-full input-field rounded-md shadow-sm p-2"></div></div>
+                    <h3 class="text-lg font-medium mt-6 mb-2 text-gray-700">Horas por Tipo:</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div><label for="ordinary-hours" class="text-xs font-medium">Ordinarias:</label><input type="number" id="ordinary-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="night-work-hours" class="text-xs font-medium">Trabajo Nocturno:</label><input type="number" id="night-work-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="extra-day-hours" class="text-xs font-medium">Extra Diurnas:</label><input type="number" id="extra-day-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="extra-night-hours" class="text-xs font-medium">Extra Nocturnas:</label><input type="number" id="extra-night-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="holiday-extra-day-hours" class="text-xs font-medium">Extra Festiva Diurna:</label><input type="number" id="holiday-extra-day-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="holiday-extra-night-hours" class="text-xs font-medium">Extra Festiva Nocturna:</label><input type="number" id="holiday-extra-night-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                        <div><label for="sunday-habitual-hours" class="text-xs font-medium">Domingo Habitual:</label><input type="number" id="sunday-habitual-hours" value="0" min="0" class="mt-1 block w-full input-field text-sm rounded-md shadow-sm p-1.5"></div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="safety-tab" class="tab-content">
+                <section id="safety-items-section">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        <h2 class="text-2xl font-semibold">Costos de Seguridad Industrial</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Agregue los elementos de seguridad, sus cantidades y costos.</p>
+                    <div id="safety-items-container" class="space-y-3">
+                        </div>
+                    <button id="add-safety-item-btn" class="mt-4 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Item de Seguridad
+                    </button>
+                </section>
+            </div>
+
+            <div id="equipment-tab" class="tab-content">
+                <section id="equipment-consumables-section">
+                    <div class="flex items-center mb-4">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-orange-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>
+                        <h2 class="text-2xl font-semibold">Arrendamiento de Equipos y Consumibles</h2>
+                    </div>
+                    
+                    <h3 class="sub-section-title">Arrendamiento de Equipos</h3>
+                    <p class="text-sm text-gray-500 mb-3">Agregue los equipos arrendados, cantidades y costos.</p>
+                    <div id="equipment-rental-items-container" class="space-y-3"></div>
+                    <button id="add-equipment-rental-item-btn" class="mt-3 btn btn-primary py-2 px-4 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Equipo Arrendado
+                    </button>
+
+                    <h3 class="sub-section-title">Consumibles</h3>
+                    <p class="text-sm text-gray-500 mb-3">Agregue los consumibles, cantidades y costos.</p>
+                    <div id="consumables-items-container" class="space-y-3"></div>
+                    <button id="add-consumable-item-btn" class="mt-3 btn btn-primary py-2 px-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Agregar Consumible
+                    </button>
+                </section>
+            </div>
+            
+            <div id="results-tab" class="tab-content">
+                <section id="results-summary-section">
+                    <div class="flex items-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-primary-color" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h2 class="text-2xl font-semibold">Resumen de la Estimación</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                        <div class="results-card-small bg-gradient-to-br from-blue-50 to-blue-100">
+                            <h3>Área de Superficie</h3>
+                            <p id="total-surface-area" class="value text-blue-600">0.00 m²</p>
+                            <p id="results-fabric-area-required" class="sub-text text-blue-500">Área tej. req: 0.00 m²</p>
+                            <div id="accessory-area-note" class="details text-xs text-blue-400"></div>
+                        </div>
+                        <div class="results-card-small bg-gradient-to-br from-green-50 to-green-100">
+                            <h3>Costo de Materiales</h3>
+                            <p id="total-material-cost" class="value text-green-600">$0.00</p>
+                            <div id="material-cost-details" class="details"></div>
+                            <div id="material-cost-note" class="details text-xs text-green-400"></div>
+                        </div>
+                        <div class="results-card-small bg-gradient-to-br from-cyan-50 to-cyan-100">
+                            <h3>Costo de Mano de Obra</h3>
+                            <p id="total-labor-cost" class="value text-cyan-600">$0.00</p>
+                            <div id="labor-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small bg-gradient-to-br from-red-50 to-red-100">
+                            <h3>Costo de Seguridad</h3>
+                            <p id="total-safety-cost" class="value text-red-600">$0.00</p>
+                            <div id="safety-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small bg-gradient-to-br from-orange-50 to-orange-100">
+                            <h3>Costo Equipos (Arr.)</h3>
+                            <p id="total-equipment-rental-cost" class="value text-orange-600">$0.00</p>
+                            <div id="equipment-rental-cost-details" class="details"></div>
+                        </div>
+                        <div class="results-card-small bg-gradient-to-br from-yellow-50 to-yellow-100">
+                            <h3>Costo Consumibles</h3>
+                            <p id="total-consumables-cost" class="value text-yellow-600">$0.00</p>
+                            <div id="consumables-cost-details" class="details"></div>
+                        </div>
+                    </div>
+
+                    <div class="total-cost-card bg-gradient-to-r from-primary-color to-primary-dark">
+                        <h3>Costo Total Estimado</h3>
+                        <p id="grand-total-cost" class="text-4xl font-bold">$0.00</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 mt-8 justify-center">
+                        <button id="calculate-btn" class="btn btn-primary bg-white text-primary-color hover:bg-primary-color hover:text-white border-2 border-primary-color">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 14h.01M12 10v-3m0 0h3m-3 0H9m12 4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Calcular/Actualizar
+                        </button>
+                        <button id="export-excel-btn" class="btn btn-success bg-white text-success-color hover:bg-success-color hover:text-white border-2 border-success-color">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v2h12V6H4zm0 4v2h12v-2H4zm0 4v2h12v-2H4z" />
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 9.586V5z" clip-rule="evenodd" />
+                            </svg>
+                            Exportar a Excel
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div> 
+        
+        <section id="limitations-disclaimer" class="disclaimer">
+            <h3 class="text-lg font-semibold mb-2">Limitaciones y Aclaraciones Importantes:</h3>
+            <ul class="list-disc list-inside text-sm space-y-1">
+                <li>El área superficial de tuberías rectas se calcula automáticamente. El área de accesorios (codos, tees, etc.) debe ser ingresada manualmente por el usuario.</li>
+                <li>Las tasas de cobertura para productos epóxicos (Filler, Saturant, Primer) no se especifican en las fuentes. La cantidad de estos materiales debe ser estimada e ingresada por el usuario.</li>
+                <li>Los precios de los productos DEACON Rocket no se proporcionan en las fuentes. El costo de los materiales se calcula utilizando los precios ingresados manualmente por el usuario.</li>
+                <li>El tiempo de mano de obra para la preparación y aplicación no se especifica en las fuentes. El usuario debe ingresar una estimación de las horas de trabajo.</li>
+                <li>Los costos de Seguridad, Arrendamiento de Equipos y Consumibles se basan en las entradas manuales del usuario.</li>
+                <li>Los cálculos de costos de mano de obra se basan en la "TABLA SALARIAL CONTRATISTA 2025 Revision 1.0" para campos petrolíferos y las horas ingresadas.</li>
+                <li>Esta aplicación es una herramienta de estimación. Los costos reales pueden variar.</li>
+            </ul>
+        </section>
+    </div> 
+
+    <template id="pipe-component-template">
+        <div class="component-card" data-id="">
+            <div class="flex justify-between items-center mb-2"><h4 class="text-lg font-semibold text-gray-700">Componente #<span class="component-number"></span></h4><button class="remove-component-btn text-red-500 hover:text-red-700 font-bold text-xl" title="Eliminar componente">&times;</button></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label class="block text-sm font-medium">Tipo de Componente:</label><select class="component-type mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm"><option value="straight">Tubería Recta</option><option value="accessory_elbow">Accesorio: Codo</option><option value="accessory_tee">Accesorio: Tee</option><option value="accessory_valve">Accesorio: Válvula</option><option value="accessory_reducer">Accesorio: Reducción</option><option value="accessory_flange">Accesorio: Brida</option></select></div>
+                <div class="straight-pipe-dims"><label class="block text-sm font-medium">Diámetro Exterior (pulgadas):</label><input type="number" min="0" step="0.01" class="component-diameter mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 6"></div>
+                <div class="straight-pipe-dims"><label class="block text-sm font-medium">Longitud (metros):</label><input type="number" min="0" step="0.01" class="component-length mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 10"></div>
+                <div class="accessory-inputs hidden"><div class="grid grid-cols-1 gap-3"><div><label class="block text-sm font-medium">Diámetro Nominal (pulgadas) <span class="text-xs text-gray-400">(Opcional)</span>:</label><input type="number" min="0" step="0.01" class="component-accessory-diameter mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 4"></div><div><label class="block text-sm font-medium">Área Exterior (m²):</label><input type="number" min="0" step="0.01" class="component-accessory-area mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm" placeholder="Ej: 0.5"><p class="text-xs text-gray-500 mt-1">Ingrese el área superficial del accesorio.</p></div></div></div>
+                <div><label class="block text-sm font-medium">Capas de Rocket Fabric:</label><input type="number" min="0" value="1" class="component-layers mt-1 block w-full input-field rounded-md shadow-sm p-2 text-sm"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="material-item-template">
+         <div class="material-item grid grid-cols-1 sm:grid-cols-3 gap-2 items-end border-t border-gray-200 pt-2">
+            <div><label class="block text-xs font-medium">Tipo/Tamaño:</label><select class="material-size block w-full input-field rounded-md shadow-sm p-1.5 text-xs"></select></div>
+            <div><label class="block text-xs font-medium">Cantidad:</label><input type="number" min="0" value="1" class="material-quantity block w-full input-field rounded-md shadow-sm p-1.5 text-xs"></div>
+            <div class="flex items-center"><div class="flex-grow"><label class="block text-xs font-medium">Precio Unitario ($):</label><input type="number" min="0" step="0.01" value="0" class="material-price block w-full input-field rounded-md shadow-sm p-1.5 text-xs"></div><button class="remove-material-item-btn text-red-500 hover:text-red-700 font-bold text-lg ml-1 mb-1" title="Eliminar item">&times;</button></div>
+        </div>
+    </template>
+
+    <template id="generic-item-template"> <div class="item-entry-card grid grid-cols-1 sm:grid-cols-4 gap-3 items-end border-t border-gray-200 pt-3">
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-medium">Descripción del Item:</label>
+                <input type="text" class="item-description mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm" placeholder="Ej: Casco de seguridad">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Cantidad:</label>
+                <input type="number" min="0" value="1" class="item-quantity mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm">
+            </div>
+            <div class="flex items-center">
+                <div class="flex-grow">
+                    <label class="block text-xs font-medium">Precio Unitario ($):</label>
+                    <input type="number" min="0" step="0.01" value="0" class="item-price mt-1 block w-full input-field rounded-md shadow-sm p-1.5 text-sm">
+                </div>
+                <button class="remove-generic-item-btn text-red-500 hover:text-red-700 font-bold text-lg ml-2 mb-1" title="Eliminar item">&times;</button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        // --- Constants and Data (Ensure full lists are used) ---
+        const PI = Math.PI;
+        const INCH_TO_METER = 0.0254;
+        const deaconProducts = { /* Full list from previous version */ fabric: { name: "Deacon Rocket Fabric", rolls: [ { id: "fab_2_10", text: "2in x 10ft", widthInches: 2, lengthFeet: 10 }, { id: "fab_2_15", text: "2in x 15ft", widthInches: 2, lengthFeet: 15 }, { id: "fab_2_30", text: "2in x 30ft", widthInches: 2, lengthFeet: 30 }, { id: "fab_2_150",text: "2in x 150ft", widthInches: 2, lengthFeet: 150 }, { id: "fab_4_10", text: "4in x 10ft", widthInches: 4, lengthFeet: 10 }, { id: "fab_4_15", text: "4in x 15ft", widthInches: 4, lengthFeet: 15 }, { id: "fab_4_30", text: "4in x 30ft", widthInches: 4, lengthFeet: 30 }, { id: "fab_4_150",text: "4in x 150ft", widthInches: 4, lengthFeet: 150 }, { id: "fab_6_10", text: "6in x 10ft", widthInches: 6, lengthFeet: 10 }, { id: "fab_6_15", text: "6in x 15ft", widthInches: 6, lengthFeet: 15 }, { id: "fab_6_30", text: "6in x 30ft", widthInches: 6, lengthFeet: 30 }, { id: "fab_6_150",text: "6in x 150ft", widthInches: 6, lengthFeet: 150 }, { id: "fab_12_10", text: "12in x 10ft", widthInches: 12, lengthFeet: 10 }, { id: "fab_12_15", text: "12in x 15ft", widthInches: 12, lengthFeet: 15 }, { id: "fab_12_30", text: "12in x 30ft", widthInches: 12, lengthFeet: 30 }, { id: "fab_12_150",text: "12in x 150ft", widthInches: 12, lengthFeet: 150 }, { id: "fab_24_10", text: "24in x 10ft", widthInches: 24, lengthFeet: 10 }, { id: "fab_24_15", text: "24in x 15ft", widthInches: 24, lengthFeet: 15 }, { id: "fab_24_30", text: "24in x 30ft", widthInches: 24, lengthFeet: 30 }, { id: "fab_24_150",text: "24in x 150ft", widthInches: 24, lengthFeet: 150 } ] }, filler: { name: "Deacon Rocket Filler", kits: [ { id: "fill_400", text: "Kit 400g", sizeGrams: 400, partNumber: "DF2004" }, { id: "fill_800", text: "Kit 800g", sizeGrams: 800, partNumber: "DF2008" } ] }, saturant: { name: "Deacon Rocket Saturant", kits: [ { id: "sat_400", text: "Kit 400g", sizeGrams: 400, partNumber: "DS1004" }, { id: "sat_800", text: "Kit 800g", sizeGrams: 800, partNumber: "DS1008" }, { id: "sat_1200",text: "Kit 1200g", sizeGrams: 1200, partNumber: "DS1012" }, { id: "sat_2400",text: "Kit 2400g", sizeGrams: 2400, partNumber: "DS1024" } ] }, primer: { name: "Deacon Rocket Primer", kits: [ { id: "prim_200", text: "Kit 200g", sizeGrams: 200, partNumber: "DP3002" }, { id: "prim_400", text: "Kit 400g", sizeGrams: 400, partNumber: "DP3004" }, { id: "prim_800", text: "Kit 800g", sizeGrams: 800, partNumber: "DP3008" }, { id: "prim_1200",text: "Kit 1200g", sizeGrams: 1200, partNumber: "DP3012" }, { id: "prim_2400",text: "Kit 2400g", sizeGrams: 2400, partNumber: "DP3024" } ] } };
+        const salaryRates = { /* Full list from previous version */ "OFICIAL DE PRIMERA A (SOLDADOR API TENDIDO ASME IX O API 1104)": { dailyTransport: 16504, hourlyRates: { ordinary: 18379, nightWorkHourRate: 24812, extraDayHourRate: 22974, extraNightHourRate: 32163, holidayExtraDayHourRate: 36759, holidayExtraNightHourRate: 45948, sundayHabitualHourRate: 32163 } }, "OFICIAL DE PRIMERA B (TUBERO ESTRUCTURERO MONTADOR MECANICO)": { dailyTransport: 16504, hourlyRates: { ordinary: 17688, nightWorkHourRate: 23879, extraDayHourRate: 22110, extraNightHourRate: 30954, holidayExtraDayHourRate: 35376, holidayExtraNightHourRate: 44220, sundayHabitualHourRate: 30954 } }, "OFICIAL DE PRIMERA C (MECANICO MONTADOR EQUIPO ROTATIVO ESTATICO INSTRUMENTISTA ELECTRECISTA)": { dailyTransport: 16504, hourlyRates: { ordinary: 17037, nightWorkHourRate: 23000, extraDayHourRate: 21296, extraNightHourRate: 29815, holidayExtraDayHourRate: 34074, holidayExtraNightHourRate: 42593, sundayHabitualHourRate: 29815 } }, "OFICIAL DE SEGUNDA (ALINEADOR AYUDANTE TECNICO MECANICO TUBERO INSTRUMENTISTA ELECTRECISTA ANDAMIERO)": { dailyTransport: 16504, hourlyRates: { ordinary: 13383, nightWorkHourRate: 18067, extraDayHourRate: 16729, extraNightHourRate: 23420, holidayExtraDayHourRate: 26766, holidayExtraNightHourRate: 33458, sundayHabitualHourRate: 23420 } }, "AYUDANTE TECNICO METALMECANICO Y OBRAS CIVILES": { dailyTransport: 16504, hourlyRates: { ordinary: 12803, nightWorkHourRate: 17284, extraDayHourRate: 16004, extraNightHourRate: 22405, holidayExtraDayHourRate: 25606, holidayExtraNightHourRate: 32008, sundayHabitualHourRate: 22405 } } };
+
+        // --- DOM Elements ---
+        const componentsContainer = document.getElementById('components-container');
+        const addComponentBtn = document.getElementById('add-component-btn');
+        const pipeComponentTemplate = document.getElementById('pipe-component-template');
+        
+        const fabricRollsContainer = document.getElementById('fabric-rolls-container');
+        const addFabricRollBtn = document.getElementById('add-fabric-roll-btn');
+        const primerKitsContainer = document.getElementById('primer-kits-container');
+        const addPrimerKitBtn = document.getElementById('add-primer-kit-btn');
+        const saturantKitsContainer = document.getElementById('saturant-kits-container');
+        const addSaturantKitBtn = document.getElementById('add-saturant-kit-btn');
+        const fillerKitsContainer = document.getElementById('filler-kits-container');
+        const addFillerKitBtn = document.getElementById('add-filler-kit-btn');
+        const materialItemTemplate = document.getElementById('material-item-template');
+
+        const safetyItemsContainer = document.getElementById('safety-items-container');
+        const addSafetyItemBtn = document.getElementById('add-safety-item-btn');
+        const equipmentRentalItemsContainer = document.getElementById('equipment-rental-items-container');
+        const addEquipmentRentalItemBtn = document.getElementById('add-equipment-rental-item-btn');
+        const consumablesItemsContainer = document.getElementById('consumables-items-container');
+        const addConsumableItemBtn = document.getElementById('add-consumable-item-btn');
+        const genericItemTemplate = document.getElementById('generic-item-template');
+
+        const workerCategorySelect = document.getElementById('worker-category');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const exportExcelBtn = document.getElementById('export-excel-btn');
+
+        const totalSurfaceAreaEl = document.getElementById('total-surface-area');
+        const totalFabricAreaRequiredEl = document.getElementById('total-fabric-area-required');
+        const resultsFabricAreaRequiredEl = document.getElementById('results-fabric-area-required');
+        const accessoryAreaNoteEl = document.getElementById('accessory-area-note');
+        const totalMaterialCostEl = document.getElementById('total-material-cost');
+        const materialCostDetailsEl = document.getElementById('material-cost-details');
+        const materialCostNoteEl = document.getElementById('material-cost-note');
+        const totalLaborCostEl = document.getElementById('total-labor-cost');
+        const laborCostDetailsEl = document.getElementById('labor-cost-details');
+        const totalSafetyCostEl = document.getElementById('total-safety-cost');
+        const safetyCostDetailsEl = document.getElementById('safety-cost-details');
+        const totalEquipmentRentalCostEl = document.getElementById('total-equipment-rental-cost');
+        const equipmentRentalCostDetailsEl = document.getElementById('equipment-rental-cost-details');
+        const totalConsumablesCostEl = document.getElementById('total-consumables-cost');
+        const consumablesCostDetailsEl = document.getElementById('consumables-cost-details');
+        const grandTotalCostEl = document.getElementById('grand-total-cost');
+
+        let componentIdCounter = 0;
+
+        // --- Tab Switching Logic ---
+        function initializeTabs() {
+            // Main tabs
+            const mainTabButtons = document.querySelectorAll('.tab-button');
+            const mainTabContents = document.querySelectorAll('.tab-content');
+            
+            mainTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and contents
+                    mainTabButtons.forEach(btn => btn.classList.remove('active'));
+                    mainTabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    button.classList.add('active');
+                    const tabId = button.getAttribute('data-tab');
+                    const tabContent = document.getElementById(`${tabId}-tab`);
+                    if (tabContent) {
+                        tabContent.classList.add('active');
+                    }
+                });
+            });
+
+            // Material sub-tabs
+            const materialTabButtons = document.querySelectorAll('.material-tab-button');
+            const materialTabContents = document.querySelectorAll('.material-tab-content');
+            
+            materialTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and contents
+                    materialTabButtons.forEach(btn => {
+                        btn.classList.remove('active-material-tab');
+                        btn.classList.remove('text-indigo-600');
+                        btn.classList.remove('border-indigo-500');
+                        btn.classList.add('text-gray-500');
+                        btn.classList.add('hover:text-gray-700');
+                        btn.classList.add('hover:border-gray-300');
+                    });
+                    materialTabContents.forEach(content => content.classList.remove('active-material-content'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    button.classList.add('active-material-tab');
+                    button.classList.remove('text-gray-500');
+                    button.classList.remove('hover:text-gray-700');
+                    button.classList.remove('hover:border-gray-300');
+                    button.classList.add('text-indigo-600');
+                    button.classList.add('border-indigo-500');
+                    
+                    const tabId = button.getAttribute('data-material-tab');
+                    const tabContent = document.getElementById(tabId);
+                    if (tabContent) {
+                        tabContent.classList.add('active-material-content');
+                    }
+                });
+            });
+        }
+
+        function initializeApp() {
+            // Initialize tabs first
+            initializeTabs();
+            
+            // Populate worker categories
+            for (const category in salaryRates) {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                workerCategorySelect.appendChild(option);
+            }
+            
+            // Initialize all add buttons with their event listeners
+            if (addComponentBtn) {
+                addComponentBtn.addEventListener('click', addNewComponent);
+            }
+            
+            // Material buttons
+            if (addFabricRollBtn) {
+                addFabricRollBtn.addEventListener('click', () => {
+                    addMaterialItem('fabric', fabricRollsContainer, deaconProducts.fabric.rolls);
+                });
+            }
+            
+            if (addPrimerKitBtn) {
+                addPrimerKitBtn.addEventListener('click', () => {
+                    addMaterialItem('primer', primerKitsContainer, deaconProducts.primer.kits);
+                });
+            }
+            
+            if (addSaturantKitBtn) {
+                addSaturantKitBtn.addEventListener('click', () => {
+                    addMaterialItem('saturant', saturantKitsContainer, deaconProducts.saturant.kits);
+                });
+            }
+            
+            if (addFillerKitBtn) {
+                addFillerKitBtn.addEventListener('click', () => {
+                    addMaterialItem('filler', fillerKitsContainer, deaconProducts.filler.kits);
+                });
+            }
+
+            // Generic item buttons
+            if (addSafetyItemBtn) {
+                addSafetyItemBtn.addEventListener('click', () => addGenericItem(safetyItemsContainer));
+            }
+            
+            if (addEquipmentRentalItemBtn) {
+                addEquipmentRentalItemBtn.addEventListener('click', () => addGenericItem(equipmentRentalItemsContainer));
+            }
+            
+            if (addConsumableItemBtn) {
+                addConsumableItemBtn.addEventListener('click', () => addGenericItem(consumablesItemsContainer));
+            }
+
+            // Calculate and export buttons
+            if (calculateBtn) {
+                calculateBtn.addEventListener('click', calculateEstimate);
+            }
+            
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', exportToExcel);
+            }
+            
+            // Event listeners for dynamic updates
+            if (componentsContainer) {
+                componentsContainer.addEventListener('input', updateRequiredFabricArea);
+            }
+            
+            if (workerCategorySelect) {
+                workerCategorySelect.addEventListener('change', calculateEstimate);
+            }
+            
+            const daysWorkedInput = document.getElementById('days-worked');
+            if (daysWorkedInput) {
+                daysWorkedInput.addEventListener('input', calculateEstimate);
+            }
+            
+            // Add event listeners to all labor input fields
+            document.querySelectorAll('#labor-section input[type="number"]').forEach(input => {
+                if (input.id !== 'days-worked') {
+                    input.addEventListener('input', calculateEstimate);
+                }
+            });
+            
+            // Initialize with one component and calculate initial estimate
+            addNewComponent();
+            calculateEstimate();
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // --- Functions ---
+        function addNewComponent() {
+            const templateContent = pipeComponentTemplate.content.cloneNode(true);
+            const componentCard = templateContent.querySelector('.component-card');
+            const componentId = `component-${++componentIdCounter}`;
+            componentCard.dataset.id = componentId;
+            
+            // Set component number
+            templateContent.querySelector('.component-number').textContent = componentIdCounter;
+            
+            // Add event listeners
+            const componentType = templateContent.querySelector('.component-type');
+            componentType.addEventListener('change', function() {
+                const isAccessory = this.value.startsWith('accessory_');
+                const straightPipeDims = componentCard.querySelectorAll('.straight-pipe-dims');
+                const accessoryInputs = componentCard.querySelector('.accessory-inputs');
+                
+                straightPipeDims.forEach(el => {
+                    el.classList.toggle('hidden', isAccessory);
+                });
+                accessoryInputs.classList.toggle('hidden', !isAccessory);
+                
+                updateRequiredFabricArea();
+            });
+            
+            // Add input event listeners for calculations
+            componentCard.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', updateRequiredFabricArea);
+            });
+            
+            // Add remove button event listener
+            const removeBtn = templateContent.querySelector('.remove-component-btn');
+            removeBtn.addEventListener('click', function() {
+                componentCard.remove();
+                updateComponentNumbers();
+                updateRequiredFabricArea();
+            });
+            
+            componentsContainer.appendChild(templateContent);
+            updateRequiredFabricArea();
+        }
+        
+        function updateComponentNumbers() {
+            let counter = 1;
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                card.querySelector('.component-number').textContent = counter++;
+            });
+        }
+        
+        function getComponentBaseAreaAndLayers(componentCard) {
+            const componentType = componentCard.querySelector('.component-type').value;
+            let baseArea = 0;
+            let layers = parseInt(componentCard.querySelector('.component-layers').value) || 1;
+            
+            if (componentType === 'straight') {
+                const diameterInches = parseFloat(componentCard.querySelector('.component-diameter').value) || 0;
+                const lengthMeters = parseFloat(componentCard.querySelector('.component-length').value) || 0;
+                
+                if (diameterInches > 0 && lengthMeters > 0) {
+                    const diameterMeters = diameterInches * INCH_TO_METER;
+                    // Área = π * diámetro * longitud
+                    baseArea = PI * diameterMeters * lengthMeters;
+                }
+            } else if (componentType.startsWith('accessory_')) {
+                baseArea = parseFloat(componentCard.querySelector('.component-accessory-area').value) || 0;
+            }
+            
+            return { baseArea, layers };
+        }
+        
+        function updateRequiredFabricArea() {
+            let totalBaseArea = 0;
+            let totalFabricAreaNeeded = 0;
+            
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                const { baseArea, layers } = getComponentBaseAreaAndLayers(card);
+                totalBaseArea += baseArea;
+                totalFabricAreaNeeded += baseArea * layers;
+            });
+            
+            // Actualizar el área total de superficie
+            totalSurfaceAreaEl.textContent = totalBaseArea.toFixed(2) + ' m²';
+            
+            // Actualizar el área de tejido requerida
+            totalFabricAreaRequiredEl.textContent = totalFabricAreaNeeded.toFixed(2) + ' m²';
+            
+            // Actualizar el área de tejido requerida en la sección de resultados
+            resultsFabricAreaRequiredEl.textContent = `Área tej. req: ${totalFabricAreaNeeded.toFixed(2)} m²`;
+            
+            // Actualizar la nota de accesorios
+            accessoryAreaNoteEl.textContent = Array.from(document.querySelectorAll('#components-container .component-card'))
+                    .some(card => card.querySelector('.component-type').value.startsWith('accessory_')) ? 
+                    "Área de accesorios incluida." : 
+                    (document.querySelectorAll('#components-container .component-card').length > 0 ? 
+                        "Solo tuberías rectas." : 
+                        "Agregue componentes.");
+            
+            // Recalcular la estimación
+            calculateEstimate();
+        }
+        
+        function addMaterialItem(materialType, container, options) {
+            const templateContent = materialItemTemplate.content.cloneNode(true);
+            const itemDiv = templateContent.querySelector('.material-item');
+            
+            // Populate the size select with options
+            const sizeSelect = itemDiv.querySelector('.material-size');
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.id;
+                optionElement.textContent = option.text;
+                sizeSelect.appendChild(optionElement);
+            });
+            
+            // Add event listeners
+            const removeBtn = itemDiv.querySelector('.remove-material-item-btn');
+            removeBtn.addEventListener('click', () => {
+                itemDiv.remove();
+                calculateEstimate();
+            });
+            
+            // Add input event listeners for quantity and price
+            itemDiv.querySelectorAll('.material-quantity, .material-price').forEach(input => {
+                input.addEventListener('input', calculateEstimate);
+            });
+            
+            container.appendChild(templateContent);
+            calculateEstimate();
+        }
+
+        function addGenericItem(container) {
+            const templateContent = genericItemTemplate.content.cloneNode(true);
+            const itemDiv = templateContent.querySelector('.item-entry-card');
+            
+            const removeBtn = itemDiv.querySelector('.remove-generic-item-btn');
+            removeBtn.addEventListener('click', () => {
+                itemDiv.remove();
+                calculateEstimate();
+            });
+
+            itemDiv.querySelectorAll('.item-description, .item-quantity, .item-price').forEach(input => {
+                input.addEventListener('input', calculateEstimate);
+            });
+            
+            container.appendChild(templateContent);
+            calculateEstimate();
+        }
+
+        function calculateEstimate() {
+            // Obtener el área total y el área de tejido requerida
+            let totalBaseArea = 0;
+            let totalFabricAreaNeeded = 0;
+            
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                const { baseArea, layers } = getComponentBaseAreaAndLayers(card);
+                totalBaseArea += baseArea;
+                totalFabricAreaNeeded += baseArea * layers;
+            });
+            
+            // Actualizar las áreas en la sección de resultados
+            totalSurfaceAreaEl.textContent = totalBaseArea.toFixed(2) + ' m²';
+            
+            resultsFabricAreaRequiredEl.textContent = `Área tej. req: ${totalFabricAreaNeeded.toFixed(2)} m²`;
+            
+            // Resto del código de calculateEstimate...
+            let currentTotalBaseSurfaceArea = 0;
+            let totalFabricAreaNeededByLayers = 0;
+            let containsAccessories = false;
+
+            // Calculate component areas
+            document.querySelectorAll('#components-container .component-card').forEach(compCard => {
+                const { baseArea, layers } = getComponentBaseAreaAndLayers(compCard);
+                currentTotalBaseSurfaceArea += baseArea;
+                totalFabricAreaNeededByLayers += baseArea * layers;
+                if (compCard.querySelector('.component-type').value !== 'straight') {
+                    containsAccessories = true;
+                }
+            });
+
+            // Update surface area display
+            totalSurfaceAreaEl.textContent = `${currentTotalBaseSurfaceArea.toFixed(2)} m²`;
+            resultsFabricAreaRequiredEl.textContent = `Área tej. req: ${totalFabricAreaNeededByLayers.toFixed(2)} m²`;
+            accessoryAreaNoteEl.innerHTML = containsAccessories ? "Área de accesorios ingresada." : 
+                (document.querySelectorAll('#components-container .component-card').length > 0 ? "Solo tuberías rectas." : "Agregue componentes.");
+
+            // Calculate material costs
+            let totalMaterialCost = 0;
+            let materialDetailsHTML = "";
+            let pricesEnteredMaterials = false;
+            let anyMaterialItemsExist = false;
+
+            // Calculate costs for each material type
+            ['fabric', 'primer', 'saturant', 'filler'].forEach(materialType => {
+                const container = document.getElementById(`${materialType}-kits-container`) || 
+                                document.getElementById(`${materialType}-rolls-container`);
+                if (container) {
+                    container.querySelectorAll('.material-item').forEach(item => {
+                        const quantity = parseFloat(item.querySelector('.material-quantity').value) || 0;
+                        const price = parseFloat(item.querySelector('.material-price').value) || 0;
+                        const itemCost = quantity * price;
+                        totalMaterialCost += itemCost;
+                        if (quantity > 0) {
+                            anyMaterialItemsExist = true;
+                            if (price > 0) pricesEnteredMaterials = true;
+                            materialDetailsHTML += `<p class="text-xs">${deaconProducts[materialType].name}: ${formatCurrency(itemCost)}</p>`;
+                        }
+                    });
+                }
+            });
+
+            // Update material cost display
+            totalMaterialCostEl.textContent = formatCurrency(totalMaterialCost);
+            materialCostDetailsEl.innerHTML = materialDetailsHTML || '<p class="text-xs">Sin desglose.</p>';
+            materialCostNoteEl.textContent = (anyMaterialItemsExist && !pricesEnteredMaterials) ? "Precios no ingresados." : "";
+
+            // Calculate labor costs
+            let totalLaborCost = 0;
+            let laborDetailsHTML = "";
+            const selectedCategory = workerCategorySelect.value;
+            const daysWorked = parseFloat(document.getElementById('days-worked').value) || 0;
+
+            if (selectedCategory && salaryRates[selectedCategory]) {
+                const rates = salaryRates[selectedCategory];
+                totalLaborCost += rates.dailyTransport * daysWorked;
+
+                // Calculate costs for each hour type
+                const hourTypes = {
+                    'ordinary-hours': rates.hourlyRates.ordinary,
+                    'night-work-hours': rates.hourlyRates.nightWorkHourRate,
+                    'extra-day-hours': rates.hourlyRates.extraDayHourRate,
+                    'extra-night-hours': rates.hourlyRates.extraNightHourRate,
+                    'holiday-extra-day-hours': rates.hourlyRates.holidayExtraDayHourRate,
+                    'holiday-extra-night-hours': rates.hourlyRates.holidayExtraNightHourRate,
+                    'sunday-habitual-hours': rates.hourlyRates.sundayHabitualHourRate
+                };
+
+                for (const [hourType, rate] of Object.entries(hourTypes)) {
+                    const hours = parseFloat(document.getElementById(hourType).value) || 0;
+                    const cost = hours * rate;
+                    totalLaborCost += cost;
+                    if (hours > 0) {
+                        laborDetailsHTML += `<p class="text-xs">${hourType.replace(/-/g, ' ').replace(/hours$/, '')}: ${formatCurrency(cost)}</p>`;
+                    }
+                }
+            }
+
+            // Update labor cost display
+            totalLaborCostEl.textContent = formatCurrency(totalLaborCost);
+            laborCostDetailsEl.innerHTML = laborDetailsHTML || '<p class="text-xs">Sin horas ingresadas.</p>';
+
+            // Calculate safety costs
+            let totalSafetyCost = 0;
+            let safetyDetailsHTML = "";
+            document.querySelectorAll('#safety-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value || "Item de seguridad";
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const itemCost = quantity * price;
+                totalSafetyCost += itemCost;
+                if (quantity > 0) {
+                    safetyDetailsHTML += `<p class="text-xs">${description} (x${quantity}): ${formatCurrency(itemCost)}</p>`;
+                }
+            });
+            totalSafetyCostEl.textContent = formatCurrency(totalSafetyCost);
+            safetyCostDetailsEl.innerHTML = safetyDetailsHTML || '<p class="text-xs">Sin items.</p>';
+
+            // Calculate equipment rental costs
+            let totalEquipmentRentalCost = 0;
+            let equipRentalDetailsHTML = "";
+            document.querySelectorAll('#equipment-rental-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value || "Equipo arrendado";
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const itemCost = quantity * price;
+                totalEquipmentRentalCost += itemCost;
+                if (quantity > 0) {
+                    equipRentalDetailsHTML += `<p class="text-xs">${description} (x${quantity}): ${formatCurrency(itemCost)}</p>`;
+                }
+            });
+            totalEquipmentRentalCostEl.textContent = formatCurrency(totalEquipmentRentalCost);
+            equipmentRentalCostDetailsEl.innerHTML = equipRentalDetailsHTML || '<p class="text-xs">Sin items.</p>';
+
+            // Calculate consumables costs
+            let totalConsumablesCost = 0;
+            let consumablesDetailsHTML = "";
+            document.querySelectorAll('#consumables-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value || "Consumible";
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                const itemCost = quantity * price;
+                totalConsumablesCost += itemCost;
+                if (quantity > 0) {
+                    consumablesDetailsHTML += `<p class="text-xs">${description} (x${quantity}): ${formatCurrency(itemCost)}</p>`;
+                }
+            });
+            totalConsumablesCostEl.textContent = formatCurrency(totalConsumablesCost);
+            consumablesCostDetailsEl.innerHTML = consumablesDetailsHTML || '<p class="text-xs">Sin items.</p>';
+
+            // Calculate grand total
+            const grandTotal = totalMaterialCost + totalLaborCost + totalSafetyCost + 
+                             totalEquipmentRentalCost + totalConsumablesCost;
+            grandTotalCostEl.textContent = formatCurrency(grandTotal);
+
+            return {
+                currentTotalBaseSurfaceArea,
+                totalFabricAreaNeeded: totalFabricAreaNeededByLayers,
+                containsAccessories,
+                totalMaterialCost,
+                totalLaborCost,
+                totalSafetyCost,
+                totalEquipmentRentalCost,
+                totalConsumablesCost,
+                grandTotal
+            };
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function parseCurrency(currencyString) {
+            return parseFloat(currencyString.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        function exportToExcel() {
+            // Crear un nuevo libro de Excel
+            const wb = XLSX.utils.book_new();
+            
+            // Preparar datos para exportar
+            const data = [];
+            
+            // 1. Información de Componentes
+            data.push(['COMPONENTES DE TUBERÍA']);
+            data.push(['Tipo', 'Diámetro (pulg)', 'Longitud (m)', 'Área (m²)', 'Capas']);
+            
+            document.querySelectorAll('#components-container .component-card').forEach(card => {
+                const type = card.querySelector('.component-type').value;
+                const diameter = card.querySelector('.component-diameter')?.value || '';
+                const length = card.querySelector('.component-length')?.value || '';
+                const area = card.querySelector('.component-accessory-area')?.value || '';
+                const layers = card.querySelector('.component-layers').value;
+                
+                data.push([type, diameter, length, area, layers]);
+            });
+            
+            data.push([]); // Línea en blanco
+            
+            // 2. Información de Materiales
+            data.push(['MATERIALES']);
+            data.push(['Tipo', 'Tamaño', 'Cantidad', 'Precio Unitario', 'Total']);
+            
+            ['fabric', 'primer', 'saturant', 'filler'].forEach(materialType => {
+                const container = document.getElementById(`${materialType}-kits-container`) || 
+                                document.getElementById(`${materialType}-rolls-container`);
+                if (container) {
+                    container.querySelectorAll('.material-item').forEach(item => {
+                        const size = item.querySelector('.material-size').selectedOptions[0].text;
+                        const quantity = item.querySelector('.material-quantity').value;
+                        const price = item.querySelector('.material-price').value;
+                        const total = quantity * price;
+                        
+                        data.push([deaconProducts[materialType].name, size, quantity, price, total]);
+                    });
+                }
+            });
+            
+            data.push([]); // Línea en blanco
+            
+            // 3. Información de Mano de Obra
+            data.push(['MANO DE OBRA']);
+            data.push(['Categoría', workerCategorySelect.value]);
+            data.push(['Días Trabajados', document.getElementById('days-worked').value]);
+            data.push([]);
+            data.push(['Tipo de Hora', 'Cantidad', 'Costo Total']);
+            
+            const hourTypes = {
+                'ordinary-hours': 'Ordinarias',
+                'night-work-hours': 'Trabajo Nocturno',
+                'extra-day-hours': 'Extra Diurnas',
+                'extra-night-hours': 'Extra Nocturnas',
+                'holiday-extra-day-hours': 'Extra Festiva Diurna',
+                'holiday-extra-night-hours': 'Extra Festiva Nocturna',
+                'sunday-habitual-hours': 'Domingo Habitual'
+            };
+            
+            for (const [id, label] of Object.entries(hourTypes)) {
+                const hours = document.getElementById(id).value;
+                if (hours > 0) {
+                    data.push([label, hours, '']);
+                }
+            }
+            
+            data.push([]); // Línea en blanco
+            
+            // 4. Información de Seguridad
+            data.push(['ITEMS DE SEGURIDAD']);
+            data.push(['Descripción', 'Cantidad', 'Precio Unitario', 'Total']);
+            
+            document.querySelectorAll('#safety-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value;
+                const quantity = item.querySelector('.item-quantity').value;
+                const price = item.querySelector('.item-price').value;
+                const total = quantity * price;
+                
+                data.push([description, quantity, price, total]);
+            });
+            
+            data.push([]); // Línea en blanco
+            
+            // 5. Información de Equipos
+            data.push(['EQUIPOS ARRENDADOS']);
+            data.push(['Descripción', 'Cantidad', 'Precio Unitario', 'Total']);
+            
+            document.querySelectorAll('#equipment-rental-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value;
+                const quantity = item.querySelector('.item-quantity').value;
+                const price = item.querySelector('.item-price').value;
+                const total = quantity * price;
+                
+                data.push([description, quantity, price, total]);
+            });
+            
+            data.push([]); // Línea en blanco
+            
+            // 6. Información de Consumibles
+            data.push(['CONSUMIBLES']);
+            data.push(['Descripción', 'Cantidad', 'Precio Unitario', 'Total']);
+            
+            document.querySelectorAll('#consumables-items-container .item-entry-card').forEach(item => {
+                const description = item.querySelector('.item-description').value;
+                const quantity = item.querySelector('.item-quantity').value;
+                const price = item.querySelector('.item-price').value;
+                const total = quantity * price;
+                
+                data.push([description, quantity, price, total]);
+            });
+            
+            data.push([]); // Línea en blanco
+            
+            // 7. Resumen de Costos
+            data.push(['RESUMEN DE COSTOS']);
+            data.push(['Concepto', 'Valor']);
+            data.push(['Área Total', document.getElementById('total-surface-area').textContent]);
+            data.push(['Área de Tejido Requerida', document.getElementById('results-fabric-area-required').textContent]);
+            data.push(['Costo de Materiales', document.getElementById('total-material-cost').textContent]);
+            data.push(['Costo de Mano de Obra', document.getElementById('total-labor-cost').textContent]);
+            data.push(['Costo de Seguridad', document.getElementById('total-safety-cost').textContent]);
+            data.push(['Costo de Equipos', document.getElementById('total-equipment-rental-cost').textContent]);
+            data.push(['Costo de Consumibles', document.getElementById('total-consumables-cost').textContent]);
+            data.push(['Costo Total', document.getElementById('grand-total-cost').textContent]);
+            
+            // Crear hoja de cálculo
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Ajustar ancho de columnas
+            const wscols = [
+                {wch: 30}, // Descripción
+                {wch: 15}, // Cantidad
+                {wch: 20}, // Precio
+                {wch: 20}  // Total
+            ];
+            ws['!cols'] = wscols;
+            
+            // Agregar hoja al libro
+            XLSX.utils.book_append_sheet(wb, ws, "Estimación");
+            
+            // Generar archivo Excel
+            const fileName = `Estimacion_Reparacion_Tuberias_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

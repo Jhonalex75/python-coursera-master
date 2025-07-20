@@ -1,0 +1,11 @@
+# Ignorar archivos temporales y datos sensibles
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
+.env
+*.xlsx
+*.xlsm
+*.db
+instance/
+uploads/

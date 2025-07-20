@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Mantenimiento Industrial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { transition: transform 0.3s ease-in-out; }
+        .main-content { transition: margin-left 0.3s ease-in-out; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 900px; border-radius: 10px; }
+        .kpi-card { background-color: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; display: flex; flex-direction: column; border-left-width: 4px; border-color: #e2e8f0; }
+        .kpi-title { font-weight: 600; color: #4a5568; display: flex; align-items: center; }
+        .kpi-value { font-size: 2.25rem; font-weight: 700; color: #1a202c; margin-top: 0.5rem; }
+        .kpi-description { font-size: 0.875rem; color: #718096; margin-top: 0.5rem; flex-grow: 1; }
+        .kpi-green { border-color: #48bb78; }
+        .kpi-yellow { border-color: #ecc94b; }
+        .kpi-red { border-color: #f56565; }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-section, #print-section * {
+                visibility: visible;
+            }
+            #print-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+              display: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 sidebar">
+            <a href="#" class="text-white flex items-center space-x-2 px-4">
+                <i class="fas fa-industry text-2xl"></i>
+                <span class="text-2xl font-extrabold">GMAO App</span>
+            </a>
+
+            <nav>
+                <a href="#dashboard" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 bg-gray-700"><i class="fas fa-chart-bar mr-2"></i>Dashboard KPIs</a>
+                <a href="#analisis-falla" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-search-plus mr-2"></i>Análisis de Falla</a>
+                <a href="#equipos" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-cogs mr-2"></i>Equipos</a>
+                <a href="#produccion" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-box-open mr-2"></i>Producción</a>
+                <a href="#ordenes" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-file-invoice-dollar mr-2"></i>Órdenes de Trabajo</a>
+                <a href="#bitacora" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-book mr-2"></i>Bitácora Diaria</a>
+                <a href="#reportes" class="nav-link block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"><i class="fas fa-chart-line mr-2"></i>Análisis y Reportes</a>
+            </nav>
+            <div class="absolute bottom-4 px-4 w-full">
+                <p class="text-xs text-gray-400">User ID:</p>
+                <p id="userIdDisplay" class="text-xs text-gray-300 break-words"></p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 flex flex-col overflow-hidden main-content">
+            <header class="flex justify-between items-center p-4 bg-white border-b-2 border-gray-200">
+                <div class="flex items-center">
+                    <button id="menu-button" class="text-gray-500 focus:outline-none md:hidden"><i class="fas fa-bars text-2xl"></i></button>
+                    <h1 id="page-title" class="text-2xl font-bold text-gray-800 ml-4">Dashboard KPIs</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                     <span id="loader" class="hidden"><i class="fas fa-spinner fa-spin text-xl text-blue-500"></i></span>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                <!-- Dashboard Content -->
+                <div id="dashboard" class="page-content">
+                    <!-- Filters -->
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-wrap items-center gap-4">
+                        <div class="flex-grow">
+                            <label for="date-range-filter" class="text-sm font-medium text-gray-700">Rango de Fechas</label>
+                            <input type="date" id="date-start-filter" class="p-2 border rounded">
+                            <span class="mx-2">a</span>
+                            <input type="date" id="date-end-filter" class="p-2 border rounded">
+                        </div>
+                        <div class="flex-grow">
+                            <label for="equipo-filter" class="text-sm font-medium text-gray-700">Equipo</label>
+                            <select id="equipo-filter" class="p-2 border rounded w-full md:w-auto">
+                                <option value="all">Todos los equipos</option>
+                            </select>
+                        </div>
+                        <button id="apply-filters-btn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Aplicar</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div class="kpi-card" id="kpi-availability-card"><h3 class="kpi-title"><i class="fas fa-power-off mr-3"></i>Disponibilidad</h3><p id="kpi-availability-value" class="kpi-value">--%</p><p class="kpi-description">Tiempo que un equipo está disponible para operar.</p></div>
+                        <div class="kpi-card" id="kpi-mtbf-card"><h3 class="kpi-title"><i class="fas fa-shield-alt mr-3"></i>MTBF</h3><p id="kpi-mtbf-value" class="kpi-value">-- hrs</p><p class="kpi-description">Tiempo promedio entre fallas.</p></div>
+                        <div class="kpi-card" id="kpi-mttr-card"><h3 class="kpi-title"><i class="fas fa-tools mr-3"></i>MTTR</h3><p id="kpi-mttr-value" class="kpi-value">-- hrs</p><p class="kpi-description">Tiempo promedio para reparar una falla.</p></div>
+                        <div class="kpi-card" id="kpi-cmp-card"><h3 class="kpi-title"><i class="fas fa-calendar-check mr-3"></i>Cumplimiento Plan</h3><p id="kpi-cmp-value" class="kpi-value">--%</p><p class="kpi-description">Actividades de mantenimiento planificadas ejecutadas.</p></div>
+                        <div class="kpi-card" id="kpi-backlog-card"><h3 class="kpi-title"><i class="fas fa-tasks mr-3"></i>Backlog</h3><p id="kpi-backlog-value" class="kpi-value">-- sem</p><p class="kpi-description">Trabajo pendiente de mantenimiento en semanas.</p></div>
+                        <div class="kpi-card" id="kpi-oee-card"><h3 class="kpi-title"><i class="fas fa-chart-pie mr-3"></i>OEE</h3><p id="kpi-oee-value" class="kpi-value">--%</p><p class="kpi-description">Efectividad Total del Equipo (Disp. x Rend. x Cal.)</p></div>
+                        <div class="kpi-card" id="kpi-cost-unit-card"><h3 class="kpi-title"><i class="fas fa-dollar-sign mr-3"></i>Costo / Unidad</h3><p id="kpi-cost-unit-value" class="kpi-value">--</p><p class="kpi-description">Costo de mantenimiento por cada unidad producida.</p></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        <div class="bg-white p-4 rounded-lg shadow-md"><canvas id="distribucionMttoChart"></canvas></div>
+                        <div class="bg-white p-4 rounded-lg shadow-md"><canvas id="costosMttoChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Análisis de Falla Content -->
+                <div id="analisis-falla" class="page-content hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800">Análisis de Falla de Weibull</h2>
+                        <div class="flex flex-wrap items-center gap-4 mb-6">
+                            <div class="flex-grow">
+                                <label for="weibull-equipo-filter" class="text-sm font-medium text-gray-700">Seleccionar Equipo para Análisis</label>
+                                <select id="weibull-equipo-filter" class="p-2 border rounded w-full"></select>
+                            </div>
+                            <div class="flex-grow">
+                                <label for="mission-time-input" class="text-sm font-medium text-gray-700">Calcular Confiabilidad a las (horas):</label>
+                                <input type="number" id="mission-time-input" class="p-2 border rounded w-full" placeholder="Ej: 5000">
+                            </div>
+                            <button id="calculate-weibull-btn" class="bg-purple-500 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 self-end">Calcular Análisis</button>
+                        </div>
+
+                        <div id="weibull-results-container" class="hidden mt-6">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Resultados y Datos -->
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Datos de Falla (Horas)</h3>
+                                    <div id="failure-data-table-container" class="h-64 overflow-y-auto border rounded-lg">
+                                        <table class="w-full text-left" id="tabla-fallas">
+                                            <thead class="bg-gray-200 sticky top-0"><tr><th class="p-2">#</th><th class="p-2">Tiempo de Falla (Horas)</th></tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Resultados del Análisis de Confiabilidad</h3>
+                                    <div id="weibull-results" class="space-y-3 p-4 bg-gray-50 rounded-lg"></div>
+                                </div>
+                            </div>
+                             <!-- Gráficos -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                                <div class="bg-white p-4 rounded-lg shadow-md"><canvas id="weibullProbabilityChart"></canvas></div>
+                                <div class="bg-white p-4 rounded-lg shadow-md"><canvas id="weibullReliabilityChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Equipos Content -->
+                <div id="equipos" class="page-content hidden">
+                    <button id="add-equipo-btn" class="mb-4 bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700"><i class="fas fa-plus mr-2"></i>Añadir Equipo</button>
+                    <div class="bg-white p-4 rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left" id="tabla-equipos"><thead><tr class="bg-gray-200"><th class="p-2">Nombre</th><th class="p-2">Área</th><th class="p-2">Criticidad</th><th class="p-2">Estado</th><th class="p-2">Acciones</th></tr></thead><tbody></tbody></table></div>
+                </div>
+
+                <!-- Producción Content -->
+                <div id="produccion" class="page-content hidden">
+                    <button id="add-produccion-btn" class="mb-4 bg-purple-500 text-white font-bold py-2 px-4 rounded hover:bg-purple-700"><i class="fas fa-plus mr-2"></i>Registrar Producción</button>
+                    <div class="bg-white p-4 rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left" id="tabla-produccion"><thead><tr class="bg-gray-200"><th class="p-2">Fecha</th><th class="p-2">Equipo</th><th class="p-2">Unidades Producidas</th><th class="p-2">Unidades Defectuosas</th><th class="p-2">Acciones</th></tr></thead><tbody></tbody></table></div>
+                </div>
+
+                <!-- Órdenes de Trabajo Content -->
+                <div id="ordenes" class="page-content hidden">
+                     <button id="add-orden-btn" class="mb-4 bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-700"><i class="fas fa-plus mr-2"></i>Nueva Orden de Trabajo</button>
+                     <div class="bg-white p-4 rounded-lg shadow-md overflow-x-auto"><table class="w-full text-left" id="tabla-ordenes"><thead><tr class="bg-gray-200"><th class="p-2">ID</th><th class="p-2">Equipo</th><th class="p-2">Tipo</th><th class="p-2">Fecha</th><th class="p-2">Estado</th><th class="p-2">Costo Total</th><th class="p-2">Acciones</th></tr></thead><tbody></tbody></table></div>
+                </div>
+
+                <!-- Bitácora Content -->
+                <div id="bitacora" class="page-content hidden">
+                    <button id="add-bitacora-btn" class="mb-4 bg-yellow-500 text-white font-bold py-2 px-4 rounded hover:bg-yellow-700"><i class="fas fa-plus mr-2"></i>Nueva Entrada</button>
+                    <div class="bg-white p-4 rounded-lg shadow-md"><div class="flex justify-between mb-4"><input type="date" id="filtro-fecha-bitacora" class="p-2 border rounded"><select id="filtro-turno-bitacora" class="p-2 border rounded"><option value="todos">Todos</option><option value="diurno">Diurno</option><option value="nocturno">Nocturno</option></select></div><div id="lista-bitacora" class="space-y-4"></div></div>
+                </div>
+
+                <!-- Reportes Content -->
+                <div id="reportes" class="page-content hidden">
+                    <div class="space-y-8">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-bold mb-4">Exportar Datos a Excel (CSV)</h3>
+                            <div class="flex space-x-4">
+                               <button onclick="exportTableToCSV('tabla-equipos', 'equipos')" class="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-700"><i class="fas fa-file-excel mr-2"></i>Exportar Equipos</button>
+                               <button onclick="exportTableToCSV('tabla-ordenes', 'ordenes_trabajo')" class="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-700"><i class="fas fa-file-excel mr-2"></i>Exportar Órdenes</button>
+                               <button onclick="exportTableToCSV('tabla-produccion', 'produccion')" class="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-700"><i class="fas fa-file-excel mr-2"></i>Exportar Producción</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="genericModal" class="modal"><div class="modal-content relative"><span id="closeModal" class="absolute top-4 right-6 text-gray-500 text-2xl font-bold hover:text-black cursor-pointer">&times;</span><div id="modalBody"></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- INICIALIZACIÓN ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_STORAGE_BUCKET", messagingSenderId: "YOUR_SENDER_ID", appId: "YOUR_APP_ID" };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+        
+        // --- ESTADO GLOBAL ---
+        let userId = null;
+        let unsubEquipos, unsubOrdenes, unsubBitacora, unsubProduccion;
+        let distribucionMttoChart, costosMttoChart, weibullProbChart, weibullReliabilityChart;
+        let allOrdenes = [], allProduccion = [];
+
+        // --- DOM ELEMENTS ---
+        const loader = document.getElementById('loader');
+        function showLoader() { loader.classList.remove('hidden'); }
+        function hideLoader() { loader.classList.add('hidden'); }
+
+        // --- RUTAS DE FIREBASE ---
+        const paths = {
+            equipos: (uid) => `artifacts/${appId}/users/${uid}/equipos`,
+            equipo: (uid, docId) => `artifacts/${appId}/users/${uid}/equipos/${docId}`,
+            ordenes: (uid) => `artifacts/${appId}/users/${uid}/ordenesDeTrabajo`,
+            orden: (uid, docId) => `artifacts/${appId}/users/${uid}/ordenesDeTrabajo/${docId}`,
+            bitacoras: (uid) => `artifacts/${appId}/users/${uid}/bitacora`,
+            produccion: (uid) => `artifacts/${appId}/users/${uid}/produccion`,
+            produccionDoc: (uid, docId) => `artifacts/${appId}/users/${uid}/produccion/${docId}`,
+        };
+
+        // --- AUTENTICACIÓN Y LISTENERS ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) { userId = user.uid; document.getElementById('userIdDisplay').textContent = userId; setupListeners(); } 
+            else { try { if (typeof __initial_auth_token !== 'undefined') await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); } catch (e) { console.error("Auth Error:", e); } }
+        });
+        
+        function setupListeners() {
+            if (!userId) return;
+            [unsubEquipos, unsubOrdenes, unsubBitacora, unsubProduccion].forEach(unsub => unsub && unsub());
+            
+            unsubEquipos = onSnapshot(collection(db, paths.equipos(userId)), s => { updateEquipoSelectors(); renderEquipos(s.docs.map(d => ({ id: d.id, ...d.data() }))); }, e => console.error("E-Eq:", e));
+            unsubOrdenes = onSnapshot(collection(db, paths.ordenes(userId)), s => { allOrdenes = s.docs.map(d => ({ id: d.id, ...d.data() })); renderOrdenes(allOrdenes); applyFilters(); }, e => console.error("E-Or:", e));
+            unsubBitacora = onSnapshot(collection(db, paths.bitacoras(userId)), () => loadBitacora(), e => console.error("E-Bi:", e));
+            unsubProduccion = onSnapshot(collection(db, paths.produccion(userId)), s => { allProduccion = s.docs.map(d => ({ id: d.id, ...d.data() })); renderProduccion(allProduccion); applyFilters(); }, e => console.error("E-Pr:", e));
+        }
+
+        // --- NAVEGACIÓN ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageContents = document.querySelectorAll('.page-content');
+        const pageTitle = document.getElementById('page-title');
+        window.addEventListener('hashchange', handleNavigation);
+        window.addEventListener('load', handleNavigation);
+        function handleNavigation() {
+            const hash = window.location.hash || '#dashboard';
+            navLinks.forEach(l => l.classList.toggle('bg-gray-700', l.getAttribute('href') === hash));
+            pageContents.forEach(c => c.classList.toggle('hidden', `#${c.id}` !== hash));
+            const activeLink = document.querySelector(`.nav-link[href="${hash}"]`);
+            if(activeLink) { pageTitle.textContent = activeLink.textContent.trim(); }
+        }
+        
+        // --- UI GENERAL ---
+        document.getElementById('menu-button').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('-translate-x-full'));
+        const modal = document.getElementById('genericModal');
+        document.getElementById('closeModal').onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; }
+        function showModal(content) { document.getElementById('modalBody').innerHTML = content; modal.style.display = 'block'; }
+        
+        // --- DASHBOARD & KPIs ---
+        document.getElementById('apply-filters-btn').addEventListener('click', applyFilters);
+        
+        function applyFilters() {
+            const start = document.getElementById('date-start-filter').value;
+            const end = document.getElementById('date-end-filter').value;
+            const equipoId = document.getElementById('equipo-filter').value;
+            
+            let filteredOrdenes = allOrdenes.filter(o => o.estado === 'Completada');
+            if (start) filteredOrdenes = filteredOrdenes.filter(o => o.fechaProgramada >= start);
+            if (end) filteredOrdenes = filteredOrdenes.filter(o => o.fechaProgramada <= end);
+            if (equipoId !== 'all') filteredOrdenes = filteredOrdenes.filter(o => o.equipoId === equipoId);
+            
+            let filteredProduccion = allProduccion;
+            if (start) filteredProduccion = filteredProduccion.filter(p => p.fecha >= start);
+            if (end) filteredProduccion = filteredProduccion.filter(p => p.fecha <= end);
+            if (equipoId !== 'all') filteredProduccion = filteredProduccion.filter(p => p.equipoId === equipoId);
+
+            calculateAndRenderKPIs(filteredOrdenes, filteredProduccion, {start, end});
+        }
+        
+        function setKpiCardStatus(cardId, value, thresholds, invert = false) {
+            const card = document.getElementById(cardId);
+            card.classList.remove('kpi-green', 'kpi-yellow', 'kpi-red');
+            if (!invert) {
+                if (value >= thresholds.green) card.classList.add('kpi-green');
+                else if (value >= thresholds.yellow) card.classList.add('kpi-yellow');
+                else card.classList.add('kpi-red');
+            } else {
+                if (value <= thresholds.green) card.classList.add('kpi-green');
+                else if (value <= thresholds.yellow) card.classList.add('kpi-yellow');
+                else card.classList.add('kpi-red');
+            }
+        }
+
+        function calculateAndRenderKPIs(ordenes = [], produccion = [], filters) {
+            // MTTR
+            let totalTiempoReparacionHoras = 0;
+            const reparacionesCorrectivas = ordenes.filter(o => o.tipoActividad === 'Correctivo' && o.inicioParada && o.finParada);
+            reparacionesCorrectivas.forEach(o => { const i = new Date(o.inicioParada).getTime(), f = new Date(o.finParada).getTime(); if (f > i) totalTiempoReparacionHoras += (f - i) / (1000 * 3600); });
+            const mttr = reparacionesCorrectivas.length > 0 ? totalTiempoReparacionHoras / reparacionesCorrectivas.length : 0;
+            document.getElementById('kpi-mttr-value').textContent = `${mttr.toFixed(2)} hrs`;
+            setKpiCardStatus('kpi-mttr-card', mttr, { green: 2, yellow: 4 }, true);
+
+            // MTBF
+            let totalHorasOperacion = 0;
+            const fallasCorrectivas = ordenes.filter(o => o.tipoActividad === 'Correctivo' && o.horasFallo);
+            fallasCorrectivas.forEach(o => { totalHorasOperacion += parseFloat(o.horasFallo); });
+            const mtbf = fallasCorrectivas.length > 0 ? totalHorasOperacion / fallasCorrectivas.length : 0;
+            document.getElementById('kpi-mtbf-value').textContent = `${mtbf.toFixed(0)} hrs`;
+            setKpiCardStatus('kpi-mtbf-card', mtbf, { green: 5000, yellow: 2000 });
+
+            // Disponibilidad
+            const totalHorasParadaCorrectiva = reparacionesCorrectivas.reduce((acc, o) => {
+                const i = new Date(o.inicioParada).getTime(), f = new Date(o.finParada).getTime();
+                return acc + (f > i ? (f - i) / (1000 * 3600) : 0);
+            }, 0);
+            const totalHorasOperativas = mtbf * fallasCorrectivas.length;
+            const tiempoTotal = totalHorasOperativas + totalHorasParadaCorrectiva;
+            const disponibilidad = tiempoTotal > 0 ? (totalHorasOperativas / tiempoTotal) * 100 : 0;
+            document.getElementById('kpi-availability-value').textContent = `${disponibilidad.toFixed(1)}%`;
+            setKpiCardStatus('kpi-availability-card', disponibilidad, { green: 95, yellow: 90 });
+            
+            // CMP
+            const planificadas = ordenes.filter(o => o.tipoActividad === 'Preventivo' || o.tipoActividad === 'Predictivo');
+            const cmp = allOrdenes.filter(o => o.tipoActividad !== 'Correctivo').length > 0 ? (planificadas.length / allOrdenes.filter(o => o.tipoActividad !== 'Correctivo').length) * 100 : 0;
+            document.getElementById('kpi-cmp-value').textContent = `${cmp.toFixed(1)}%`;
+            setKpiCardStatus('kpi-cmp-card', cmp, { green: 90, yellow: 80 });
+
+            // Backlog
+            let horasPendientes = 0;
+            allOrdenes.filter(o => o.estado !== 'Completada' && o.estado !== 'Cancelada').forEach(o => { horasPendientes += parseFloat(o.recursosHumanos?.split(',')[1] || 0); });
+            document.getElementById('kpi-backlog-value').textContent = `${(horasPendientes / 40).toFixed(1)} sem`;
+            setKpiCardStatus('kpi-backlog-card', (horasPendientes / 40), { green: 2, yellow: 4 }, true);
+
+            // Costos y Producción
+            let totalCostos = ordenes.reduce((acc, o) => acc + (parseFloat(o.costoManoObra) || 0) + (parseFloat(o.costoMateriales) || 0), 0);
+            let totalUnidades = produccion.reduce((acc, p) => acc + (parseInt(p.unidadesProducidas) || 0), 0);
+            let totalDefectos = produccion.reduce((acc, p) => acc + (parseInt(p.unidadesDefectuosas) || 0), 0);
+            const costoPorUnidad = totalUnidades > 0 ? totalCostos / totalUnidades : 0;
+            document.getElementById('kpi-cost-unit-value').textContent = `$${costoPorUnidad.toFixed(2)}`;
+            setKpiCardStatus('kpi-cost-unit-card', costoPorUnidad, { green: 1, yellow: 5 }, true);
+            
+            // OEE
+            const calidad = totalUnidades > 0 ? ((totalUnidades - totalDefectos) / totalUnidades) : 0;
+            const oee = (disponibilidad / 100) * 1 * calidad * 100; // Rendimiento asumido 100%
+            document.getElementById('kpi-oee-value').textContent = `${oee.toFixed(1)}%`;
+            setKpiCardStatus('kpi-oee-card', oee, { green: 85, yellow: 75 });
+            
+            // Charts
+            const preventivoCount = ordenes.filter(o => o.tipoActividad === 'Preventivo').length;
+            const correctivoCount = fallasCorrectivas.length;
+            updateChart(distribucionMttoChart, 'distribucionMttoChart', 'pie', 'Distribución de Mantenimiento', { Preventivo: preventivoCount, Correctivo: correctivoCount }, ['#4299E1', '#F56565'], (chart) => distribucionMttoChart = chart);
+            const costosPorEquipo = ordenes.reduce((acc, o) => { const costo = (parseFloat(o.costoManoObra) || 0) + (parseFloat(o.costoMateriales) || 0); acc[o.equipoNombre] = (acc[o.equipoNombre] || 0) + costo; return acc; }, {});
+            updateChart(costosMttoChart, 'costosMttoChart', 'bar', 'Costos de Mantenimiento por Equipo', costosPorEquipo, '#48BB78', (chart) => costosMttoChart = chart);
+        }
+        
+        function updateChart(chartInstance, canvasId, type, label, data, colors, callback) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            const newChart = new Chart(ctx, { type: type, data: { labels: Object.keys(data), datasets: [{ label: label, data: Object.values(data), backgroundColor: colors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
+            callback(newChart);
+        }
+
+        // --- ANÁLISIS DE FALLA (WEIBULL) ---
+        document.getElementById('calculate-weibull-btn').addEventListener('click', runWeibullAnalysis);
+        
+        async function runWeibullAnalysis() {
+            const equipoId = document.getElementById('weibull-equipo-filter').value;
+            if (!equipoId) {
+                alert('Por favor, seleccione un equipo.');
+                return;
+            }
+            showLoader();
+
+            const q = query(collection(db, paths.ordenes(userId)), where("equipoId", "==", equipoId), where("tipoActividad", "==", "Correctivo"), where("estado", "==", "Completada"));
+            const querySnapshot = await getDocs(q);
+            const failureData = [];
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.horasFallo && !isNaN(parseFloat(data.horasFallo)) && parseFloat(data.horasFallo) > 0) {
+                    failureData.push(parseFloat(data.horasFallo));
+                }
+            });
+
+            if (failureData.length < 2) {
+                alert('No hay suficientes datos de falla para este equipo (se necesitan al menos 2).');
+                hideLoader();
+                return;
+            }
+
+            failureData.sort((a, b) => a - b);
+            renderFailureDataTable(failureData);
+
+            // Cálculo de Weibull
+            const n = failureData.length;
+            const medianRanks = failureData.map((_, i) => (i + 1 - 0.3) / (n + 0.4));
+            const y = medianRanks.map(F => Math.log(Math.log(1 / (1 - F))));
+            const x = failureData.map(t => Math.log(t));
+
+            // Regresión lineal simple
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumX2 += x[i] * x[i];
+            }
+            const beta = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - beta * sumX) / n;
+            const eta = Math.exp(-intercept / beta);
+
+            // Calcular MTTF
+            const mttf = eta * gamma(1 + 1 / beta);
+
+            // Renderizar resultados
+            renderWeibullResults(beta, eta, mttf);
+            
+            // Gráficos
+            updateChart(weibullProbChart, 'weibullProbabilityChart', 'scatter', 'Datos de Falla', {
+                datasets: [{
+                    label: 'Datos Transformados',
+                    data: x.map((val, i) => ({x: val, y: y[i]})),
+                    backgroundColor: 'rgba(255, 99, 132, 1)'
+                }, {
+                    label: 'Línea de Ajuste Weibull',
+                    data: x.map(val => ({x: val, y: beta * val + intercept})),
+                    type: 'line',
+                    fill: false,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    pointRadius: 0
+                }]
+            }, null, (chart) => weibullProbChart = chart);
+            
+            const maxTime = Math.max(...failureData) * 1.2;
+            const reliabilityCurveData = [];
+            for (let t = 0; t <= maxTime; t += maxTime/100) {
+                 reliabilityCurveData.push({x: t, y: Math.exp(-Math.pow(t/eta, beta))});
+            }
+            updateChart(weibullReliabilityChart, 'weibullReliabilityChart', 'line', 'Confiabilidad R(t)', {
+                datasets: [{
+                    label: 'Confiabilidad vs Tiempo',
+                    data: reliabilityCurveData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false,
+                    pointRadius: 0
+                }]
+            }, null, (chart) => weibullReliabilityChart = chart);
+
+
+            document.getElementById('weibull-results-container').classList.remove('hidden');
+            hideLoader();
+        }
+
+        function renderFailureDataTable(data) {
+            const tbody = document.getElementById('tabla-fallas').querySelector('tbody');
+            tbody.innerHTML = '';
+            data.forEach((time, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50';
+                tr.innerHTML = `<td class="p-2">${index + 1}</td><td class="p-2">${time.toLocaleString()}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderWeibullResults(beta, eta, mttf) {
+            const container = document.getElementById('weibull-results');
+            const missionTime = parseFloat(document.getElementById('mission-time-input').value);
+            let reliability = 'N/A';
+            if (!isNaN(missionTime) && missionTime > 0) {
+                reliability = (Math.exp(-Math.pow(missionTime / eta, beta)) * 100).toFixed(2) + '%';
+            }
+            
+            let betaInterpretation = '';
+            if (beta < 1) betaInterpretation = 'Fallas de infancia/prematuras. La tasa de fallas disminuye con el tiempo.';
+            else if (beta > 1.1) betaInterpretation = 'Fallas por desgaste. La tasa de fallas aumenta con el tiempo.';
+            else betaInterpretation = 'Fallas aleatorias. La tasa de fallas es constante.';
+
+            container.innerHTML = `
+                <p><strong>Parámetro de Forma (Beta β):</strong> <span class="font-mono text-lg text-blue-600">${beta.toFixed(3)}</span></p>
+                <p class="text-sm text-gray-600 italic">${betaInterpretation}</p>
+                <hr class="my-2">
+                <p><strong>Parámetro de Escala (Eta η):</strong> <span class="font-mono text-lg text-green-600">${eta.toFixed(0)}</span> horas</p>
+                <p class="text-sm text-gray-600 italic">Es el tiempo en el que se espera que haya fallado el 63.2% de la población.</p>
+                <hr class="my-2">
+                 <p><strong>Tiempo Medio Hasta la Falla (MTTF):</strong> <span class="font-mono text-lg text-purple-600">${mttf.toFixed(0)}</span> horas</p>
+                <hr class="my-2">
+                <p><strong>Confiabilidad a ${missionTime || 'T'} horas:</strong> <span class="font-mono text-lg text-red-600">${reliability}</span></p>
+            `;
+        }
+
+        function gamma(z) {
+            // Aproximación de Lanczos - suficiente para fines de visualización
+            const g = 7;
+            const p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+            if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+            z -= 1;
+            let x = p[0];
+            for (let i = 1; i < g + 2; i++) x += p[i] / (z + i);
+            let t = z + g + 0.5;
+            return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+        }
+
+
+        // --- EQUIPOS ---
+        function renderEquipos(equipos) {
+            const tbody = document.getElementById('tabla-equipos').querySelector('tbody'); tbody.innerHTML = '';
+            equipos.forEach(equipo => {
+                const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
+                const criticidadMap = { 'Alta': 'bg-red-200 text-red-800', 'Media': 'bg-yellow-200 text-yellow-800', 'Baja': 'bg-green-200 text-green-800' };
+                const criticidadClass = criticidadMap[equipo.criticidad] || 'bg-gray-200';
+                tr.innerHTML = `<td class="p-2">${equipo.nombre}</td><td class="p-2">${equipo.area || 'N/A'}</td><td class="p-2"><span class="px-2 py-1 text-xs rounded-full ${criticidadClass}">${equipo.criticidad || 'N/A'}</span></td><td class="p-2"><span class="px-2 py-1 text-xs rounded-full ${equipo.estado === 'Activo' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">${equipo.estado}</span></td><td class="p-2"><button class="view-equipo-btn text-blue-500 mr-2" data-id="${equipo.id}"><i class="fas fa-eye"></i></button><button class="edit-equipo-btn text-yellow-500 mr-2" data-id="${equipo.id}"><i class="fas fa-edit"></i></button><button class="delete-equipo-btn text-red-500" data-id="${equipo.id}"><i class="fas fa-trash"></i></button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('add-equipo-btn').addEventListener('click', () => showEquipoForm());
+        document.getElementById('tabla-equipos').addEventListener('click', async (e) => {
+             const target = e.target.closest('button'); if (!target || !userId) return; const id = target.dataset.id; const docRef = doc(db, paths.equipo(userId, id));
+             if (target.classList.contains('view-equipo-btn')) { const docSnap = await getDoc(docRef); if (docSnap.exists()) showEquipoDetail(docSnap.data()); } 
+             else if (target.classList.contains('edit-equipo-btn')) { const docSnap = await getDoc(docRef); if (docSnap.exists()) showEquipoForm({ id, ...docSnap.data() }); } 
+             else if (target.classList.contains('delete-equipo-btn')) { showModal(`<h2 class="text-xl font-bold mb-4">Confirmar</h2><p>¿Eliminar este equipo?</p><div class="mt-6 flex justify-end space-x-4"><button class="px-4 py-2 bg-gray-300 rounded" onclick="document.getElementById('genericModal').style.display='none'">Cancelar</button><button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded">Eliminar</button></div>`); document.getElementById('confirm-delete').onclick = async () => { await deleteDoc(docRef); modal.style.display='none'; }; }
+        });
+        function showEquipoForm(equipo = {}) {
+            const isEditing = !!equipo.id;
+            const content = `<h2 class="text-2xl font-bold mb-4">${isEditing ? 'Editar' : 'Añadir'} Equipo</h2><form id="form-equipo"><input type="hidden" name="id" value="${equipo.id || ''}"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <input name="nombre" class="p-2 border rounded" placeholder="Nombre" value="${equipo.nombre || ''}" required>
+                <input name="codigo" class="p-2 border rounded" placeholder="Código" value="${equipo.codigo || ''}" required>
+                <input name="tipo" class="p-2 border rounded" placeholder="Tipo" value="${equipo.tipo || ''}">
+                <input name="proceso" class="p-2 border rounded" placeholder="Proceso" value="${equipo.proceso || ''}">
+                <input name="responsable" class="p-2 border rounded" placeholder="Responsable" value="${equipo.responsable || ''}">
+                <input name="sede" class="p-2 border rounded" placeholder="Sede" value="${equipo.sede || ''}">
+                <select name="estado" class="p-2 border rounded"><option value="Activo" ${equipo.estado === 'Activo' ? 'selected' : ''}>Activo</option><option value="Inactivo" ${equipo.estado === 'Inactivo' ? 'selected' : ''}>Inactivo</option></select>
+                <input name="ubicacion" class="p-2 border rounded" placeholder="Ubicación" value="${equipo.ubicacion || ''}">
+                <input name="marca" class="p-2 border rounded" placeholder="Marca" value="${equipo.marca || ''}">
+                <input name="modelo" class="p-2 border rounded" placeholder="Modelo" value="${equipo.modelo || ''}">
+                <input name="serie" class="p-2 border rounded" placeholder="Serie" value="${equipo.serie || ''}">
+                <select name="criticidad" class="p-2 border rounded"><option value="">Criticidad...</option><option value="Alta" ${equipo.criticidad === 'Alta' ? 'selected' : ''}>Alta</option><option value="Media" ${equipo.criticidad === 'Media' ? 'selected' : ''}>Media</option><option value="Baja" ${equipo.criticidad === 'Baja' ? 'selected' : ''}>Baja</option></select>
+                <div class="md:col-span-1"><label class="text-sm">Fin Vida Útil:</label><input name="finVidaUtil" type="date" class="p-2 border rounded w-full" value="${equipo.finVidaUtil || ''}"></div>
+                <div class="md:col-span-2"><label class="text-sm">URL de Foto:</label><input name="fotoUrl" class="p-2 border rounded w-full" placeholder="https://..." value="${equipo.fotoUrl || ''}"></div>
+            </div><button type="submit" class="mt-4 bg-blue-500 text-white font-bold py-2 px-4 rounded">${isEditing ? 'Actualizar' : 'Guardar'}</button></form>`;
+            showModal(content);
+            document.getElementById('form-equipo').addEventListener('submit', async (e) => {
+                e.preventDefault(); if(!userId) return;
+                const formData = new FormData(e.target), data = Object.fromEntries(formData.entries()), id = data.id; delete data.id;
+                if (isEditing) { await updateDoc(doc(db, paths.equipo(userId, id)), data); } else { await addDoc(collection(db, paths.equipos(userId)), data); }
+                modal.style.display = 'none';
+            });
+        }
+        
+        window.printHojaDeVida = function() {
+            const printContent = document.getElementById('hoja-vida-content').innerHTML;
+            const printWindow = window.open('', '', 'height=800,width=800');
+            printWindow.document.write('<html><head><title>Hoja de Vida de Equipo</title>');
+            printWindow.document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+            printWindow.document.write('<style>body { padding: 2rem; } .no-print { display: none; }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(printContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 500); // Timeout to allow styles to load
+        }
+
+        function showEquipoDetail(equipo) {
+             const content = `
+                <div id="hoja-vida-content">
+                    <div class="flex justify-between items-start">
+                         <h2 class="text-3xl font-bold mb-4 text-gray-800">Hoja de Vida de Equipo</h2>
+                         <button onclick="printHojaDeVida()" class="no-print bg-gray-500 text-white font-bold py-2 px-4 rounded hover:bg-gray-700"><i class="fas fa-print mr-2"></i>Imprimir</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                             <img src="${equipo.fotoUrl || 'https://placehold.co/400x300/e2e8f0/cbd5e0?text=Sin+Foto'}" onerror="this.onerror=null;this.src='https://placehold.co/400x300/e2e8f0/cbd5e0?text=Error';" class="w-full h-auto rounded-lg shadow-md">
+                        </div>
+                        <div class="md:col-span-2 space-y-4">
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <h3 class="text-xl font-semibold border-b pb-2 mb-2">Información Principal</h3>
+                                <p><strong>Nombre:</strong> ${equipo.nombre || 'N/A'}</p>
+                                <p><strong>Código/Tag:</strong> ${equipo.codigo || 'N/A'}</p>
+                                <p><strong>Tipo de Equipo:</strong> ${equipo.tipo || 'N/A'}</p>
+                                <p><strong>Estado:</strong> <span class="px-2 py-1 text-xs rounded-full ${equipo.estado === 'Activo' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">${equipo.estado || 'N/A'}</span></p>
+                                <p><strong>Criticidad:</strong> <span class="px-2 py-1 text-xs rounded-full ${(equipo.criticidad === 'Alta' ? 'bg-red-200 text-red-800' : (equipo.criticidad === 'Media' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800'))}">${equipo.criticidad || 'N/A'}</span></p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <h3 class="text-xl font-semibold border-b pb-2 mb-2">Detalles de Fabricación y Ubicación</h3>
+                                <p><strong>Marca:</strong> ${equipo.marca || 'N/A'}</p>
+                                <p><strong>Modelo:</strong> ${equipo.modelo || 'N/A'}</p>
+                                <p><strong>Serie:</strong> ${equipo.serie || 'N/A'}</p>
+                                <p><strong>Sede:</strong> ${equipo.sede || 'N/A'}</p>
+                                <p><strong>Área:</strong> ${equipo.area || 'N/A'}</p>
+                                <p><strong>Ubicación Específica:</strong> ${equipo.ubicacion || 'N/A'}</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <h3 class="text-xl font-semibold border-b pb-2 mb-2">Información Operativa</h3>
+                                <p><strong>Proceso:</strong> ${equipo.proceso || 'N/A'}</p>
+                                <p><strong>Responsable:</strong> ${equipo.responsable || 'N/A'}</p>
+                                <p><strong>Fin de Vida Útil (Estimado):</strong> ${equipo.finVidaUtil || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            showModal(content);
+        }
+
+
+        // --- PRODUCCIÓN ---
+        function renderProduccion(produccion) {
+            const tbody = document.getElementById('tabla-produccion').querySelector('tbody'); tbody.innerHTML = '';
+            produccion.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach(p => { const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50'; tr.innerHTML = `<td class="p-2">${p.fecha}</td><td class="p-2">${p.equipoNombre || 'N/A'}</td><td class="p-2">${p.unidadesProducidas}</td><td class="p-2">${p.unidadesDefectuosas}</td><td class="p-2"><button class="delete-produccion-btn text-red-500" data-id="${p.id}"><i class="fas fa-trash"></i></button></td>`; tbody.appendChild(tr); });
+        }
+        document.getElementById('add-produccion-btn').addEventListener('click', () => showProduccionForm());
+        document.getElementById('tabla-produccion').addEventListener('click', async (e) => {
+            const target = e.target.closest('button.delete-produccion-btn'); if (!target || !userId) return; const id = target.dataset.id;
+            showModal(`<h2 class="text-xl font-bold mb-4">Confirmar</h2><p>¿Eliminar registro?</p><div class="mt-6 flex justify-end"><button class="px-4 py-2 bg-red-500 text-white rounded" id="confirm-delete">Eliminar</button></div>`);
+            document.getElementById('confirm-delete').onclick = async () => { await deleteDoc(doc(db, paths.produccionDoc(userId, id))); modal.style.display = 'none'; };
+        });
+        function showProduccionForm() {
+            const content = `<h2 class="text-2xl font-bold mb-4">Registrar Producción</h2><form id="form-produccion"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label>Fecha</label><input name="fecha" type="date" class="p-2 border rounded w-full" required></div><div><label>Equipo</label><select name="equipoId" id="produccion-equipo-select" class="p-2 border rounded w-full" required><option value="">Seleccione...</option>${getEquipoOptions()}</select></div><div><label>Unidades Producidas</label><input name="unidadesProducidas" type="number" class="p-2 border rounded w-full" required></div><div><label>Unidades Defectuosas</label><input name="unidadesDefectuosas" type="number" class="p-2 border rounded w-full" required></div></div><button type="submit" class="mt-4 bg-purple-500 text-white font-bold py-2 px-4 rounded">Guardar</button></form>`;
+            showModal(content);
+            document.getElementById('form-produccion').addEventListener('submit', async (e) => {
+                e.preventDefault(); if(!userId) return;
+                const formData = new FormData(e.target), data = Object.fromEntries(formData.entries());
+                const select = document.getElementById('produccion-equipo-select'); data.equipoNombre = select.options[select.selectedIndex].dataset.nombre;
+                await addDoc(collection(db, paths.produccion(userId)), data);
+                modal.style.display = 'none';
+            });
+        }
+        
+        // --- Shared functions ---
+        let equiposCache = [];
+        async function updateEquipoSelectors() {
+            if(!userId) return;
+            const s = await getDocs(collection(db, paths.equipos(userId)));
+            equiposCache = s.docs.map(d => ({id: d.id, ...d.data()}));
+            const optionsHtml = equiposCache.map(e => `<option value="${e.id}" data-nombre="${e.nombre}">${e.nombre}</option>`).join('');
+            document.getElementById('equipo-filter').innerHTML = `<option value="all">Todos los equipos</option>${optionsHtml}`;
+            document.getElementById('weibull-equipo-filter').innerHTML = `<option value="">Seleccione un equipo...</option>${optionsHtml}`;
+        }
+        function getEquipoOptions(selectedId) { return equiposCache.map(e => `<option value="${e.id}" data-nombre="${e.nombre}" ${e.id === selectedId ? 'selected' : ''}>${e.nombre} (${e.codigo})</option>`).join(''); }
+
+        // --- ORDENES Y OTROS ---
+        function renderOrdenes(ordenes) {
+             const tbody = document.getElementById('tabla-ordenes').querySelector('tbody'); tbody.innerHTML = '';
+             ordenes.forEach(o => {
+                 const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
+                 const costoTotal = (parseFloat(o.costoManoObra) || 0) + (parseFloat(o.costoMateriales) || 0);
+                 tr.innerHTML = `<td class="p-2">${o.id.substring(0,6)}</td><td class="p-2">${o.equipoNombre}</td><td class="p-2">${o.tipoActividad}</td><td class="p-2">${o.fechaProgramada}</td><td class="p-2">${o.estado}</td><td class="p-2">$${costoTotal.toFixed(2)}</td><td class="p-2"><button class="edit-orden-btn text-yellow-500" data-id="${o.id}"><i class="fas fa-edit"></i></button></td>`;
+                 tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('add-orden-btn').addEventListener('click', () => showOrdenForm());
+        document.getElementById('tabla-ordenes').addEventListener('click', async (e) => {
+            const target = e.target.closest('button.edit-orden-btn'); if (!target || !userId) return;
+            const docSnap = await getDoc(doc(db, paths.orden(userId, target.dataset.id)));
+            if (docSnap.exists()) showOrdenForm({ id: docSnap.id, ...docSnap.data() });
+        });
+        function showOrdenForm(orden = {}) {
+            const isEditing = !!orden.id;
+            const content = `<h2 class="text-2xl font-bold mb-4">${isEditing ? 'Editar' : 'Nueva'} Orden</h2><form id="form-orden"><input type="hidden" name="id" value="${orden.id||''}"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label>Equipo</label><select name="equipoId" id="orden-equipo-select" class="p-2 border rounded w-full" required><option>Seleccione...</option>${getEquipoOptions(orden.equipoId)}</select></div><div><label>Tipo</label><select name="tipoActividad" id="orden-tipo-actividad" class="p-2 border rounded w-full"><option>Preventivo</option><option>Correctivo</option></select></div><div><label>Fecha</label><input name="fechaProgramada" type="date" class="p-2 border rounded w-full" value="${orden.fechaProgramada||''}" required></div><div><label>Estado</label><select name="estado" class="p-2 border rounded w-full"><option>Programada</option><option>Completada</option></select></div><div id="horas-fallo-container" class="hidden"><label>Horas de Operación hasta el Fallo</label><input type="number" name="horasFallo" class="p-2 border rounded w-full" value="${orden.horasFallo || ''}"></div><div><label>Inicio Parada</label><input name="inicioParada" type="datetime-local" class="p-2 border rounded w-full" value="${orden.inicioParada||''}"></div><div><label>Fin Parada</label><input name="finParada" type="datetime-local" class="p-2 border rounded w-full" value="${orden.finParada||''}"></div><div><label>Recursos (Nombre,Hrs,Tarifa)</label><textarea name="recursosHumanos" class="p-2 border rounded w-full">${orden.recursosHumanos||''}</textarea></div><div><label>Costo Materiales</label><input name="costoMateriales" type="number" class="p-2 border rounded w-full" value="${orden.costoMateriales||''}"></div></div><button type="submit" class="mt-4 bg-green-500 text-white font-bold py-2 px-4 rounded">${isEditing?'Actualizar':'Crear'}</button></form>`;
+            showModal(content);
+            const tipoSelect = document.getElementById('orden-tipo-actividad');
+            const horasFalloContainer = document.getElementById('horas-fallo-container');
+            const toggleHorasFallo = () => { horasFalloContainer.classList.toggle('hidden', tipoSelect.value !== 'Correctivo'); };
+            tipoSelect.addEventListener('change', toggleHorasFallo);
+            toggleHorasFallo();
+            document.getElementById('form-orden').addEventListener('submit', async(e) => {
+                e.preventDefault(); if(!userId) return;
+                const formData = new FormData(e.target); const data = Object.fromEntries(formData.entries()); const id = data.id; delete data.id;
+                const select = document.getElementById('orden-equipo-select'); data.equipoNombre = select.options[select.selectedIndex].dataset.nombre;
+                let costoManoObra=0; if(data.recursosHumanos){const p=data.recursosHumanos.split(',');if(p.length===3)costoManoObra=(parseFloat(p[1])||0)*(parseFloat(p[2])||0);} data.costoManoObra=costoManoObra;
+                if (isEditing) { await updateDoc(doc(db, paths.orden(userId, id)), data); } else { await addDoc(collection(db, paths.ordenes(userId)), data); }
+                modal.style.display = 'none';
+            });
+        }
+        
+        async function loadBitacora() { /* Simplified */ }
+        function renderBitacora(entradas) { /* Simplified */ }
+        
+        function tableToCSV(table) {
+            let csv = [];
+            table.querySelectorAll('tr').forEach(tr => { let row = []; tr.querySelectorAll('td, th').forEach(cell => { if (!cell.querySelector('button')) row.push('"' + cell.innerText.replace(/"/g, '""') + '"'); }); csv.push(row.join(',')); });
+            return csv.join('\n');
+        }
+        window.exportTableToCSV = function(tableID, filename = '') {
+            const table = document.getElementById(tableID); if (!table) return;
+            const csv_data = tableToCSV(table);
+            const blob = new Blob(["\uFEFF" + csv_data], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = (filename || 'export') + '.csv';
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

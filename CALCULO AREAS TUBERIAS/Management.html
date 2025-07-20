@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management for Mechanical Engineers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+        }
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .interactive-reveal-button {
+            cursor: pointer;
+            background-color: #e0f2fe; /* light sky blue */
+            color: #0c4a6e; /* darker sky blue */
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-top: 8px;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .interactive-reveal-button:hover {
+            background-color: #bae6fd; /* slightly darker sky blue */
+        }
+        .reveal-content {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f9ff; /* very light sky blue */
+            border-left: 4px solid #38bdf8; /* sky blue */
+            border-radius: 4px;
+        }
+        .nav-button {
+            background-color: #0284c7; /* sky-600 */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-button:hover {
+            background-color: #0369a1; /* sky-700 */
+        }
+        .nav-button:disabled {
+            background-color: #7dd3fc; /* sky-300 */
+            cursor: not-allowed;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 10px;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #0284c7; /* sky-600 */
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 8px;
+        }
+        /* Custom scrollbar for content overflow */
+        .slide-content-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        .slide-content-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .slide-content-area::-webkit-scrollbar-thumb {
+            background: #0284c7; /* sky-600 */
+            border-radius: 10px;
+        }
+        .slide-content-area::-webkit-scrollbar-thumb:hover {
+            background: #0369a1; /* sky-700 */
+        }
+        .slide-content-area {
+            height: 100%; /* MODIFIED: Fill the parent .slide */
+            overflow-y: auto;
+            padding-right: 10px; /* Space for scrollbar */
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 md:p-8 flex flex-col" style="max-height: 95vh;">
+        <header class="mb-6 text-center border-b pb-4 border-slate-300 flex-shrink-0">
+            <h1 class="text-2xl md:text-3xl font-bold text-sky-700">Project Management for Mechanical Engineers</h1>
+            <p class="text-md text-slate-600">Mastering Communication & Stakeholder Engagement</p>
+        </header>
+
+        <main id="slidesContainer" class="relative flex-grow overflow-hidden">
+            <div class="slide active h-full" data-slide-id="1">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Welcome!</h2>
+                    <img src="https://placehold.co/800x300/0284c7/FFFFFF?text=Mechanical+Engineering+Projects&font=inter" alt="Mechanical Engineering Projects Banner" class="w-full h-auto rounded-lg mb-6 shadow-md" onerror="this.src='https://placehold.co/800x300/cccccc/333333?text=Image+Not+Available&font=inter'">
+                    <p class="text-slate-700 mb-3">This interactive guide explores key project management principles tailored for mechanical engineering, focusing on the critical roles of communication and stakeholder engagement.</p>
+                    <p class="text-slate-700">Navigate using the buttons below. Some slides have clickable elements for more details!</p>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="2">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Why Project Management in Mechanical Engineering?</h2>
+                    <ul class="list-disc list-inside text-slate-700 space-y-3">
+                        <li>Mechanical engineering projects are often complex, involving intricate designs, multidisciplinary teams, and critical timelines.</li>
+                        <li>Effective project management is essential to deliver these projects on time, within budget, and to the required quality standards.</li>
+                        <li>It helps in navigating challenges like:
+                            <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-slate-600">
+                                <li>Managing design iterations and changes.</li>
+                                <li>Coordinating between design, analysis, manufacturing, and testing teams.</li>
+                                <li>Ensuring compliance with industry standards and client specifications.</li>
+                                <li>Controlling costs and resources effectively.</li>
+                            </ul>
+                        </li>
+                        <li>Ultimately, good PM leads to successful project outcomes and stakeholder satisfaction.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="3">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">The Communication Core</h2>
+                    <p class="text-slate-700 mb-3">"Project managers spend a significant amount of their time communicating with team members and other stakeholders, both internal and external to the organization." (Source 1)</p>
+                    <p class="text-slate-700 mb-3">Effective communication acts as a bridge between diverse stakeholders who may have different backgrounds, expertise levels (e.g., technical vs. non-technical), perspectives, and interests.</p>
+                    <div class="mt-4 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+                        <h3 class="font-semibold text-sky-700">In Mechanical Engineering, this means:</h3>
+                        <ul class="list-disc list-inside text-slate-600 space-y-1 mt-2">
+                            <li>Clearly conveying design specifications to manufacturing.</li>
+                            <li>Explaining technical complexities to clients or management.</li>
+                            <li>Facilitating discussions between different engineering disciplines (e.g., stress analysis, thermodynamics, materials science).</li>
+                            <li>Keeping suppliers informed about material requirements and timelines.</li>
+                        </ul>
+                    </div>
+                    <div class="interactive-reveal-button" onclick="toggleReveal('reveal-pm-time')">
+                        Did you know? Click to learn more.
+                    </div>
+                    <div id="reveal-pm-time" class="reveal-content">
+                        <p>Studies suggest that project managers can spend up to 90% of their time on project-related communications! This highlights how crucial strong communication skills are for project success, especially in technical fields like mechanical engineering where clarity and precision are paramount.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="4">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Developing a Communication Strategy</h2>
+                    <p class="text-slate-700 mb-3">Successful communication involves two main parts (Source 2, 3):</p>
+                    <ol class="list-decimal list-inside text-slate-700 space-y-2 mb-4">
+                        <li><strong>Developing an appropriate communication strategy:</strong> This is based on the specific needs of the project and its stakeholders.</li>
+                        <li><strong>Implementing the strategy:</strong> Carrying out the necessary activities to put the plan into action.</li>
+                    </ol>
+                    <p class="text-slate-700 mb-3">"For an interactive presentation (and any project communication), understanding these needs and tailoring the approach accordingly is key." (Source 4)</p>
+                     <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h3 class="font-semibold text-amber-700">Considerations for ME Communication Strategy:</h3>
+                        <ul class="list-disc list-inside text-slate-600 space-y-1 mt-2">
+                            <li><strong>Audience:</strong> Are you communicating with fellow engineers, management, clients, or shop floor personnel? Tailor technical depth accordingly.</li>
+                            <li><strong>Purpose:</strong> Is it for information, decision-making, problem-solving, or progress reporting?</li>
+                            <li><strong>Frequency & Method:</strong> How often is communication needed? What are the best channels (e.g., daily stand-ups for agile teams, formal reports for clients)?</li>
+                            <li><strong>Documentation:</strong> What needs to be formally documented (e.g., design changes, test results, client approvals)?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="5">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Communication Methods: Choosing Your Channel (Source 5)</h2>
+                    <p class="text-slate-700 mb-4">Communication methods can be broadly classified into:</p>
+                    
+                    <div>
+                        <h3 class="font-semibold text-lg text-sky-700 mt-3">1. Interactive Communication</h3>
+                        <p class="text-slate-600 mb-2">Multidirectional exchange of information in real-time. Highly relevant for presentations and collaborative ME work.</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-interactive')">ME Examples</div>
+                        <div id="reveal-interactive" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Design review meetings</li>
+                                <li>Daily stand-ups with the engineering team</li>
+                                <li>Brainstorming sessions for problem-solving</li>
+                                <li>Client consultations via video conference</li>
+                                <li>Instant messaging for quick queries between team members</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-semibold text-lg text-sky-700 mt-3">2. Push Communication</h3>
+                        <p class="text-slate-600 mb-2">Information is sent or "pushed" to specific recipients who need to know it. Ensures information is distributed but doesn't guarantee it was received or understood.</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-push')">ME Examples</div>
+                        <div id="reveal-push" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Weekly progress reports emailed to stakeholders</li>
+                                <li>Technical specification documents distributed to the manufacturing team</li>
+                                <li>Memos regarding safety updates or policy changes</li>
+                                <li>Change order notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="font-semibold text-lg text-sky-700 mt-3">3. Pull Communication</h3>
+                        <p class="text-slate-600 mb-2">Used for large volumes of information, or for large audiences. Requires recipients to access content at their own discretion.</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-pull')">ME Examples</div>
+                        <div id="reveal-pull" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>CAD file repositories on a shared server</li>
+                                <li>Project plans and schedules on a project management portal</li>
+                                <li>Internal knowledge bases with design standards or lessons learned</li>
+                                <li>Online databases of material properties</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide h-full" data-slide-id="6">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Focus: Interactive Communication in ME (Source 5, 6, 7, 8, 9)</h2>
+                    <p class="text-slate-700 mb-3">Interactive communication is ideal for dynamic ME projects, which often involve evolving designs and require quick feedback loops (Source 7).</p>
+                    <h3 class="font-medium text-slate-700 mt-3 mb-1">Types of Interactive Communication (Source 6):</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 mb-3">
+                        <li><strong>Interpersonal:</strong> One-on-one discussions (e.g., a senior engineer mentoring a junior).</li>
+                        <li><strong>Small Group:</strong> Team meetings, design huddles (3-6 people).</li>
+                        <li><strong>Public:</strong> Presenting at a project kickoff or a technical conference.</li>
+                    </ul>
+                    <p class="text-slate-700 mb-3">"Adaptive project environments (common in R&D or custom machinery design) inherently need more frequent and quick communication." (Source 7)</p>
+                    <p class="text-slate-700"><strong>Promote Transparency:</strong> (Source 8, 9)</p>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1 mt-1">
+                        <li>Invite relevant stakeholders to key meetings (e.g., fabricators to late-stage design reviews).</li>
+                        <li>Post project artifacts (design iterations, test results, simulation reports) in accessible locations. This promotes faster information sharing and shared understanding.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="7">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Essential Communication Skills for MEs (Source 10, 11, 14, 23)</h2>
+                    
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-lg text-sky-700">1. Active Listening</h3>
+                        <p class="text-slate-600 mb-1">"Crucial for understanding the receiver and ensuring effective information exchange." (Source 10)</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-listening')">Tips for ME Context</div>
+                        <div id="reveal-listening" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Pay full attention during technical discussions or client briefings.</li>
+                                <li>Paraphrase complex technical details to confirm understanding (e.g., "So, you're saying the tolerance for this component needs to be ±0.05mm?").</li>
+                                <li>Ask clarifying questions about specifications, constraints, or feedback.</li>
+                                <li>Acknowledge non-verbal cues.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-lg text-sky-700">2. Presentation Skills</h3>
+                        <p class="text-slate-600 mb-1">"Emphasizing awareness of the audience, their expectations and needs, and the objectives of the project and team." (Source 11, 14)</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-presentation')">Tips for Presenting ME Data</div>
+                        <div id="reveal-presentation" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Tailor content: technical depth for engineers, high-level summaries for management.</li>
+                                <li>Use clear visuals: diagrams, charts, CAD renderings to explain complex concepts.</li>
+                                <li>Simplify complex data where possible, focusing on key findings and impact.</li>
+                                <li>Clearly state objectives and conclusions.</li>
+                                <li>Practice delivery to ensure clarity and confidence.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                     <div class="mb-4">
+                        <h3 class="font-semibold text-lg text-sky-700">3. Facilitation Skills</h3>
+                        <p class="text-slate-600 mb-1">"The ability to effectively guide a group event to a successful decision, solution, or conclusion, ensuring effective participation and mutual understanding." (Source 11)</p>
+                        <div class="interactive-reveal-button" onclick="toggleReveal('reveal-facilitation')">Facilitating ME Discussions</div>
+                        <div id="reveal-facilitation" class="reveal-content">
+                            <ul class="list-disc list-inside text-slate-600 space-y-1">
+                                <li>Guiding brainstorming sessions for innovative design solutions.</li>
+                                <li>Leading root cause analysis meetings for product failures.</li>
+                                <li>Ensuring all voices are heard in design reviews (e.g., from design, analysis, manufacturing perspectives).</li>
+                                <li>Managing technical disagreements constructively towards a consensus.</li>
+                                <li>Keeping discussions focused and on track.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold text-lg text-sky-700">4. Managing Feedback</h3>
+                        <p class="text-slate-600">"Supports interactive communication." (Source 23) Essential for iterative design processes in ME, such as design critiques, prototype reviews, and peer reviews of calculations or simulations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="8">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Effective Meeting Management in ME (Source 12, 26, 32, 33, 34)</h2>
+                    <p class="text-slate-700 mb-3">"Meetings are a primary vehicle for interactive communication." (Source 26) In ME, they are critical for design reviews, risk assessments, progress tracking, and problem-solving.</p>
+                    <h3 class="font-medium text-slate-700 mt-3 mb-2">Elements of Effective ME Meetings (Source 12):</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2">
+                        <li><strong>Clear Agenda:</strong> Distributed beforehand (e.g., "Agenda: Review stress analysis results for Component X and decide on material selection").</li>
+                        <li><strong>Appropriate Participants:</strong> Invite only necessary personnel (e.g., relevant design engineers, stress analyst, materials specialist).</li>
+                        <li><strong>Punctuality:</strong> Start and finish on time.</li>
+                        <li><strong>Stay on Topic:</strong> Gently guide discussions back if they stray.</li>
+                        <li><strong>Manage Expectations, Issues & Conflicts:</strong> Address differing technical opinions constructively.</li>
+                        <li><strong>Record Actions & Decisions:</strong> Clearly document who is responsible for what, by when (e.g., "Action: FEA team to re-run analysis with new load case by EOD Friday. Decision: Proceed with Material Option B.").</li>
+                    </ul>
+                    <p class="text-slate-700 mt-4">"Risk reviews (scheduled meetings to examine risk responses) and risk workshops (dedicated meetings for discussing identified risks) are crucial for anticipating and mitigating potential problems in ME projects." (Source 32, 33, 34)</p>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="9">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Engaging Your Stakeholders in ME Projects (Source 35, 36, 8, 37)</h2>
+                    <p class="text-slate-700 mb-3">"Stakeholder engagement focuses on developing approaches to involve stakeholders based on their needs, expectations, interests, and potential impact on the project." (Source 35, 36)</p>
+                    <div class="interactive-reveal-button" onclick="toggleReveal('reveal-me-stakeholders')">Who are ME Stakeholders? Click to see examples.</div>
+                    <div id="reveal-me-stakeholders" class="reveal-content mb-3">
+                        <ul class="list-disc list-inside text-slate-600 space-y-1">
+                            <li><strong>Internal:</strong> Design team, analysis team, manufacturing/production, quality control, testing department, procurement, management.</li>
+                            <li><strong>External:</strong> Clients/customers, end-users, suppliers, regulatory bodies (e.g., for safety standards), contractors, investors.</li>
+                        </ul>
+                    </div>
+                    <p class="text-slate-700 mb-3 mt-3">"Active engagement and participation are essential, especially in environments with a high degree of change (e.g., new product development, custom machinery)." (Source 8)</p>
+                    <h3 class="font-medium text-slate-700 mt-3 mb-2">Benefits of Strong Stakeholder Engagement (Source 8):</h3>
+                     <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li><strong>Mitigate Risk:</strong> Early feedback can catch design flaws or manufacturability issues.</li>
+                        <li><strong>Build Trust:</strong> Regular, open communication fosters better relationships.</li>
+                        <li><strong>Support Adjustments:</strong> Easier to manage changes when stakeholders are informed and involved.</li>
+                        <li><strong>Reduce Costs:</strong> Fewer surprises and reworks.</li>
+                        <li><strong>Increase Likelihood of Success:</strong> Aligns project with expectations.</li>
+                    </ul>
+                    <p class="text-slate-700 mt-3">"Understanding the current engagement level of stakeholders and the desired level helps tailor engagement strategies. The stakeholder engagement assessment matrix is a tool for this." (Source 37)</p>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="10">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Knowledge Sharing in ME Teams (Source 41, 42, 43, 44, 45)</h2>
+                    <p class="text-slate-700 mb-3">"Interactions between people are key for sharing knowledge, particularly tacit knowledge (personal experience, insights, intuition)." (Source 41, 42)</p>
+                    <p class="text-slate-700 mb-3">This is crucial in ME for sharing design best practices, lessons learned from past projects (e.g., "what went wrong with the X prototype"), innovative manufacturing techniques, or expertise in specialized software.</p>
+                    <p class="text-slate-700 mb-3">"Creating an atmosphere of trust is crucial for motivating people to share what they know." (Source 43)</p>
+                    <h3 class="font-medium text-slate-700 mt-3 mb-2">Methods for Knowledge Sharing (Source 44):</h3>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li>Networking (internal and external)</li>
+                        <li>Communities of Practice (e.g., a group of FEA specialists within the company)</li>
+                        <li>Regular team meetings and technical workshops</li>
+                        <li>Storytelling (e.g., "Let me tell you how we solved a similar vibration issue on Project Alpha.")</li>
+                        <li>Knowledge fairs/cafes</li>
+                        <li>Interactive training sessions</li>
+                        <li>Peer reviews of designs and calculations</li>
+                        <li>Mentorship programs</li>
+                    </ul>
+                    <p class="text-slate-700 mt-3">"Face-to-face interaction is noted as being usually the most effective way to build the trusting relationships needed to manage knowledge." (Source 45) While virtual tools are valuable, prioritize direct interaction where possible.</p>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="11">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Applying These Principles to *Any* Interactive Presentation</h2>
+                    <p class="text-slate-700 mb-3">The principles we've discussed for project communication and stakeholder engagement are directly applicable to making any presentation, including this one, more effective and interactive:</p>
+                    <ul class="list-disc list-inside text-slate-700 space-y-2">
+                        <li><strong>Emphasize Interactive Communication:</strong>
+                            <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                                <li>Incorporate Q&A sessions, group discussions, or breakout activities.</li>
+                                <li>Encourage participants to actively engage rather than passively receive information. (Source 5)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Leverage Interpersonal Skills:</strong>
+                             <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                                <li>Employ active listening to genuinely understand audience questions and feedback. (Source 10)</li>
+                                <li>Use facilitation techniques to guide discussions and ensure participation. (Source 11)</li>
+                                <li>Be culturally aware and tailor communication appropriately.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Structure for Engagement:</strong>
+                            <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                                <li>Plan specific moments for interaction.</li>
+                                <li>Draw from meeting management principles: set clear objectives for discussion points. (Source 12)</li>
+                                <li>Use techniques from workshops or facilitated sessions. (Source 17)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Utilize Relevant Technology (for virtual presentations):</strong>
+                            <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                                <li>Use video conferencing and collaboration tools with features like screen sharing, chat, polls, or virtual whiteboards to enhance interaction and knowledge sharing. (Source 44)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Focus on Stakeholder (Audience) Needs:</strong>
+                             <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                                <li>Explicitly acknowledge the diverse needs and expectations of the audience.</li>
+                                <li>Structure content and interactions to address them effectively. (Source 35)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="12">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Key Takeaways for ME Project Managers</h2>
+                    <img src="https://placehold.co/800x250/0ea5e9/FFFFFF?text=Engineering+Success&font=inter" alt="Engineering Success Banner" class="w-full h-auto rounded-lg mb-6 shadow-md" onerror="this.src='https://placehold.co/800x250/cccccc/333333?text=Image+Not+Available&font=inter'">
+                    <ul class="list-disc list-inside text-slate-700 space-y-3">
+                        <li><strong>Communication is Paramount:</strong> It's not just a soft skill; it's a core competency for successful project execution in mechanical engineering.</li>
+                        <li><strong>Proactive Stakeholder Engagement Drives Success:</strong> Understand their needs, involve them appropriately, and build strong relationships.</li>
+                        <li><strong>Master Interactive Communication Skills:</strong> Active listening, clear presentation, and effective facilitation are essential tools in your PM toolkit.</li>
+                        <li><strong>Tailor Your Approach:</strong> Adapt your communication methods and engagement strategies to the specific project, audience, and context.</li>
+                        <li><strong>Foster Knowledge Sharing:</strong> Create an environment of trust where technical knowledge and experience can flow freely.</li>
+                        <li><strong>Apply These Principles Universally:</strong> Use them in team meetings, client presentations, and all project interactions.</li>
+                    </ul>
+                    <p class="mt-6 text-center text-lg font-semibold text-sky-700">"Successful mechanical engineering projects are built on a foundation of clear communication, collaborative teamwork, and strong stakeholder relationships."</p>
+                </div>
+            </div>
+
+            <div class="slide h-full" data-slide-id="13">
+                <div class="slide-content-area">
+                    <h2 class="text-xl md:text-2xl font-semibold text-sky-600 mb-4">Q&A / Discussion</h2>
+                    <img src="https://placehold.co/800x300/7dd3fc/0c4a6e?text=Questions%3F+Let%27s+Discuss!&font=inter" alt="Q&A Banner" class="w-full h-auto rounded-lg mb-6 shadow-md" onerror="this.src='https://placehold.co/800x300/cccccc/333333?text=Image+Not+Available&font=inter'">
+                    <p class="text-slate-700 mb-3 text-lg">Thank you for going through this presentation!</p>
+                    <p class="text-slate-700 mb-3">This is an opportunity to discuss any points further, ask questions, or share your own experiences related to project management, communication, and stakeholder engagement in mechanical engineering.</p>
+                    <p class="text-slate-700">Consider:
+                        <ul class="list-disc list-inside text-slate-600 space-y-1 mt-2">
+                            <li>What are the biggest communication challenges you face in your ME projects?</li>
+                            <li>Can you share an example of successful stakeholder engagement?</li>
+                            <li>How can your team improve knowledge sharing?</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="mt-8 pt-6 border-t border-slate-300 flex-shrink-0">
+            <div class="progress-bar-container mb-4">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div class="flex justify-between items-center">
+                <button id="prevButton" class="nav-button" onclick="changeSlide(-1)">Previous</button>
+                <span id="slideIndicator" class="text-sm text-slate-600">Slide 1 / 13</span>
+                <button id="nextButton" class="nav-button" onclick="changeSlide(1)">Next</button>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const slideIndicator = document.getElementById('slideIndicator');
+        const progressBar = document.getElementById('progressBar');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+                // Reset scroll for the new active slide
+                if (i === index) {
+                    const contentArea = slide.querySelector('.slide-content-area');
+                    if (contentArea) {
+                        contentArea.scrollTop = 0;
+                    }
+                }
+            });
+            currentSlide = index;
+            updateNavigation();
+        }
+
+        function changeSlide(direction) {
+            const newSlideIndex = currentSlide + direction;
+            if (newSlideIndex >= 0 && newSlideIndex < totalSlides) {
+                showSlide(newSlideIndex);
+            }
+        }
+
+        function updateNavigation() {
+            prevButton.disabled = currentSlide === 0;
+            nextButton.disabled = currentSlide === totalSlides - 1;
+            slideIndicator.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+            const progressPercentage = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        // MODIFIED FUNCTION:
+        function toggleReveal(elementId) {
+            const content = document.getElementById(elementId);
+            if (content) {
+                // Check current effective display style, not just inline style
+                const isCurrentlyVisible = window.getComputedStyle(content).display === 'block';
+                
+                if (isCurrentlyVisible) {
+                    content.style.display = 'none';
+                } else {
+                    content.style.display = 'block';
+                    // Use requestAnimationFrame to ensure the display change has been rendered
+                    // before attempting to scroll. This makes getBoundingClientRect more reliable.
+                    requestAnimationFrame(() => {
+                        const slideContentArea = content.closest('.slide-content-area');
+                        if (slideContentArea) {
+                            const contentRect = content.getBoundingClientRect();
+                            const containerRect = slideContentArea.getBoundingClientRect();
+
+                            // Check if the content is not fully visible within the scrollable container
+                            const isTopVisible = contentRect.top >= containerRect.top;
+                            const isBottomVisible = contentRect.bottom <= containerRect.bottom;
+                            const isLeftVisible = contentRect.left >= containerRect.left; // For completeness
+                            const isRightVisible = contentRect.right <= containerRect.right; // For completeness
+
+                            if (!isTopVisible || !isBottomVisible || !isLeftVisible || !isRightVisible) {
+                                content.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight') {
+                changeSlide(1);
+            } else if (event.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+
+        // Initialize first slide
+        showSlide(0);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Mecanismo de 5 Barras con Gráficas</title>
+    <!-- Incluimos Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluimos Chart.js para las gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            border: 1px solid #e2e8f0; /* gris más oscuro */
+            border-radius: 0.5rem;
+        }
+        #mechanismCanvas {
+            background-color: #f8fafc; /* gris claro */
+        }
+        /* Estilo para los sliders */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6; /* azul */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-7xl bg-white p-6 md:p-8 rounded-xl shadow-lg">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Simulador de Mecanismo de 5 Barras</h1>
+            <p class="text-gray-600 mt-2">Ajusta los parámetros y observa el comportamiento dinámico del mecanismo.</p>
+        </header>
+
+        <!-- Contenedor principal: Controles y simulación -->
+        <main class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            
+            <!-- Columna de Controles -->
+            <div class="lg:col-span-2 flex flex-col space-y-6">
+                <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Controles</h2>
+                
+                <!-- Controles Manuales -->
+                <div id="manual-controls">
+                    <label for="theta2" class="block font-medium text-gray-700">Ángulo Entrada 1 (θ₂)</label>
+                    <input type="range" id="theta2" min="0" max="360" value="45" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    <span id="theta2-value" class="block text-center text-blue-600 font-mono mt-1">45°</span>
+                    
+                    <label for="theta5" class="block font-medium text-gray-700 mt-4">Ángulo Entrada 2 (θ₅)</label>
+                    <input type="range" id="theta5" min="0" max="360" value="120" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    <span id="theta5-value" class="block text-center text-blue-600 font-mono mt-1">120°</span>
+                </div>
+
+                <!-- Controles de Animación -->
+                <div class="pt-6 border-t">
+                     <label for="rpm" class="block font-medium text-gray-700">Velocidad de Entrada (RPM en θ₂)</label>
+                     <input type="number" id="rpm" value="10" class="mt-2 w-full p-2 border border-gray-300 rounded-md">
+                     <button id="start-stop-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                         Iniciar Movimiento
+                     </button>
+                </div>
+
+                <div id="error-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative hidden" role="alert">
+                    <strong class="font-bold">Error:</strong>
+                    <span class="block sm:inline" id="error-text"></span>
+                </div>
+            </div>
+
+            <!-- Columna de Visualización y Gráficas -->
+            <div class="lg:col-span-3 flex flex-col space-y-6">
+                <!-- Canvas para la visualización -->
+                <div class="w-full">
+                    <canvas id="mechanismCanvas" width="600" height="400"></canvas>
+                </div>
+                 <!-- Gráficas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-center mb-2">Posición del Eslabón Rojo (Punto Medio)</h3>
+                        <canvas id="positionChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-center mb-2">Velocidad del Eslabón Rojo (Punto Medio)</h3>
+                        <canvas id="velocityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Referencias a los elementos del DOM ---
+        const canvas = document.getElementById('mechanismCanvas');
+        const ctx = canvas.getContext('2d');
+        const sliderTheta2 = document.getElementById('theta2');
+        const sliderTheta5 = document.getElementById('theta5');
+        const labelTheta2 = document.getElementById('theta2-value');
+        const labelTheta5 = document.getElementById('theta5-value');
+        const rpmInput = document.getElementById('rpm');
+        const startStopBtn = document.getElementById('start-stop-btn');
+        const errorBox = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        // --- Estado de la Animación ---
+        let isAnimating = false;
+        let animationFrameId;
+        let lastTimestamp = 0;
+        let currentTheta2 = parseFloat(sliderTheta2.value);
+        let currentTheta5 = parseFloat(sliderTheta5.value);
+        let lastMidpoint = null;
+        let animationStartTime = 0;
+
+        // --- Parámetros del Mecanismo ---
+        const L1 = 7.0, L2 = 3.0, L3 = 5.0, L4 = 5.0, L5 = 4.0;
+
+        // --- Configuración del Canvas de Simulación ---
+        const scale = 40;
+        const origin = { x: canvas.width / 4, y: canvas.height / 1.5 };
+
+        // --- Configuración de Gráficas (Chart.js) ---
+        let positionChart, velocityChart;
+        const MAX_DATA_POINTS = 100; // Máximos puntos a mostrar en la gráfica
+
+        function createCharts() {
+            const chartOptions = {
+                scales: {
+                    x: { title: { display: true, text: 'Tiempo (s)' } },
+                    y: { title: { display: true, text: 'Valor' } }
+                },
+                animation: { duration: 0 },
+                plugins: { legend: { position: 'top' } }
+            };
+            positionChart = new Chart(document.getElementById('positionChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [
+                    { label: 'Posición X', data: [], borderColor: 'rgb(239, 68, 68)', tension: 0.1, pointRadius: 0 },
+                    { label: 'Posición Y', data: [], borderColor: 'rgb(59, 130, 246)', tension: 0.1, pointRadius: 0 }
+                ]},
+                options: chartOptions
+            });
+            velocityChart = new Chart(document.getElementById('velocityChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [
+                    { label: 'Velocidad X (u/s)', data: [], borderColor: 'rgb(239, 68, 68)', tension: 0.1, pointRadius: 0 },
+                    { label: 'Velocidad Y (u/s)', data: [], borderColor: 'rgb(59, 130, 246)', tension: 0.1, pointRadius: 0 }
+                ]},
+                options: chartOptions
+            });
+        }
+
+        function updateChartData(chart, time, newData) {
+            chart.data.labels.push(time.toFixed(2));
+            newData.forEach((val, index) => {
+                chart.data.datasets[index].data.push(val);
+            });
+
+            if (chart.data.labels.length > MAX_DATA_POINTS) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            chart.update('none');
+        }
+
+        function resetCharts() {
+            positionChart.data.labels = [];
+            velocityChart.data.labels = [];
+            positionChart.data.datasets.forEach(d => d.data = []);
+            velocityChart.data.datasets.forEach(d => d.data = []);
+            positionChart.update();
+            velocityChart.update();
+        }
+
+        // --- Lógica de Cinemática ---
+        function solveKinematics(theta2_deg, theta5_deg) {
+            const theta2_rad = theta2_deg * Math.PI / 180;
+            const theta5_rad = theta5_deg * Math.PI / 180;
+            const p1 = { x: 0, y: 0 }, p5 = { x: L1, y: 0 };
+            const p2 = { x: L2 * Math.cos(theta2_rad), y: L2 * Math.sin(theta2_rad) };
+            const p4 = { x: L1 + L5 * Math.cos(theta5_rad), y: L5 * Math.sin(theta5_rad) };
+            const dx = p4.x - p2.x, dy = p4.y - p2.y;
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if (d > L3 + L4 || d < Math.abs(L3 - L4) || d === 0) return { error: "Configuración imposible." };
+            const a = (L3*L3 - L4*L4 + d*d) / (2 * d);
+            const h_squared = L3*L3 - a*a;
+            if (h_squared < 0) return { error: "Configuración imposible (cálculo h)." };
+            const h = Math.sqrt(h_squared);
+            const p_mid_x = p2.x + a * dx / d, p_mid_y = p2.y + a * dy / d;
+            const p3 = { x: p_mid_x + h * dy / d, y: p_mid_y - h * dx / d };
+            return { error: null, points: { p1, p2, p3, p4, p5 } };
+        }
+
+        // --- Funciones de Dibujo ---
+        function drawBar(p_start, p_end, color = 'black', width = 8) {
+            ctx.beginPath();
+            ctx.moveTo(origin.x + p_start.x * scale, origin.y - p_start.y * scale);
+            ctx.lineTo(origin.x + p_end.x * scale, origin.y - p_end.y * scale);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+        function drawJoint(p, color = 'black', radius = 6) {
+            ctx.beginPath();
+            ctx.arc(origin.x + p.x * scale, origin.y - p.y * scale, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        function drawMechanism(positions) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!positions) return;
+            const { p1, p2, p3, p4, p5 } = positions;
+            drawBar(p1, p5, '#9ca3af', 6);
+            drawBar(p1, p2, '#3b82f6');
+            drawBar(p2, p3, '#10b981');
+            drawBar(p3, p4, '#ef4444');
+            drawBar(p5, p4, '#f97316');
+            drawJoint(p1, '#4b5563', 8);
+            drawJoint(p5, '#4b5563', 8);
+            drawJoint(p2);
+            drawJoint(p4);
+            drawJoint(p3, '#a855f7', 8);
+        }
+
+        // --- Lógica Principal ---
+        function updateAndDraw(theta2, theta5) {
+            const result = solveKinematics(theta2, theta5);
+            errorBox.classList.toggle('hidden', !result.error);
+            if (result.error) {
+                errorText.textContent = result.error;
+                drawMechanism(null);
+                return null;
+            } else {
+                drawMechanism(result.points);
+                return result.points;
+            }
+        }
+        
+        function handleManualUpdate() {
+            const theta2 = parseFloat(sliderTheta2.value);
+            const theta5 = parseFloat(sliderTheta5.value);
+            labelTheta2.textContent = `${theta2.toFixed(0)}°`;
+            labelTheta5.textContent = `${theta5.toFixed(0)}°`;
+            
+            if (!isAnimating) {
+                currentTheta2 = theta2;
+                currentTheta5 = theta5;
+            }
+            
+            updateAndDraw(currentTheta2, currentTheta5);
+        }
+
+        function animate(timestamp) {
+            if (!isAnimating) return;
+
+            if (lastTimestamp === 0) {
+                lastTimestamp = timestamp;
+                animationStartTime = timestamp;
+            }
+
+            const dt = (timestamp - lastTimestamp) / 1000; // Delta time en segundos
+
+            const rpm = parseFloat(rpmInput.value);
+            const omega_main = rpm * 2 * Math.PI / 60; // rad/s
+            const omega_secondary = omega_main * 0.7; // Velocidad de la segunda barra (70% de la principal)
+
+            currentTheta2 += (omega_main * 180 / Math.PI) * dt;
+            currentTheta5 += (omega_secondary * 180 / Math.PI) * dt;
+            
+            if (currentTheta2 >= 360) currentTheta2 -= 360;
+            if (currentTheta5 >= 360) currentTheta5 -= 360;
+
+            // Actualizar las etiquetas y los deslizadores
+            sliderTheta2.value = currentTheta2;
+            sliderTheta5.value = currentTheta5;
+            labelTheta2.textContent = `${currentTheta2.toFixed(0)}°`;
+            labelTheta5.textContent = `${currentTheta5.toFixed(0)}°`;
+            
+            const currentPositions = updateAndDraw(currentTheta2, currentTheta5);
+            
+            if (currentPositions) {
+                // Los datos de las gráficas son para el punto medio de la barra roja (p3 a p4)
+                const midpoint = {
+                    x: (currentPositions.p3.x + currentPositions.p4.x) / 2,
+                    y: (currentPositions.p3.y + currentPositions.p4.y) / 2
+                };
+                
+                if (lastMidpoint && dt > 0) {
+                    const velocity = {
+                        x: (midpoint.x - lastMidpoint.x) / dt,
+                        y: (midpoint.y - lastMidpoint.y) / dt
+                    };
+                    const totalTime = (timestamp - animationStartTime) / 1000;
+                    updateChartData(positionChart, totalTime, [midpoint.x, midpoint.y]);
+                    updateChartData(velocityChart, totalTime, [velocity.x, velocity.y]);
+                }
+                lastMidpoint = midpoint;
+            }
+
+            lastTimestamp = timestamp;
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            if (isAnimating) {
+                startStopBtn.textContent = 'Detener Movimiento';
+                startStopBtn.classList.replace('bg-blue-600', 'bg-red-600');
+                startStopBtn.classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
+                rpmInput.disabled = true;
+                sliderTheta2.disabled = true;
+                sliderTheta5.disabled = true;
+                
+                resetCharts();
+                currentTheta2 = parseFloat(sliderTheta2.value);
+                currentTheta5 = parseFloat(sliderTheta5.value);
+                lastTimestamp = 0;
+                lastMidpoint = null;
+                animationFrameId = requestAnimationFrame(animate);
+            } else {
+                startStopBtn.textContent = 'Iniciar Movimiento';
+                startStopBtn.classList.replace('bg-red-600', 'bg-blue-600');
+                startStopBtn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+                rpmInput.disabled = false;
+                sliderTheta2.disabled = false;
+                sliderTheta5.disabled = false;
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        // --- Event Listeners e Inicialización ---
+        window.addEventListener('load', () => {
+            createCharts();
+            handleManualUpdate();
+        });
+        sliderTheta2.addEventListener('input', handleManualUpdate);
+        sliderTheta5.addEventListener('input', handleManualUpdate);
+        startStopBtn.addEventListener('click', toggleAnimation);
+
+    </script>
+</body>
+</html>

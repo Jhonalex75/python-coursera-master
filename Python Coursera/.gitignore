@@ -1,0 +1,159 @@
+# =============================================================================
+# .gitignore - PYTHON COURSERA MASTER
+# =============================================================================
+# Archivos y directorios que deben ser ignorados por Git
+# =============================================================================
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Archivos de Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de logs
+*.log
+logs/
+debug_toolkit.log
+
+# Archivos de datos temporales
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Archivos de reportes generados
+reportes/
+*.txt
+*.xlsx
+*.csv
+*.pdf
+
+# Archivos de configuración local
+config_paquete.json
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de caché
+.pytest_cache/
+.cache/
+*.cache
+
+# Archivos de base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de imágenes generadas
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# Archivos de video
+*.mp4
+*.avi
+*.mov
+*.wmv
+
+# Archivos de audio
+*.mp3
+*.wav
+*.flac
+
+# Archivos comprimidos
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Archivos de documentación temporal
+docs/_build/
+docs/build/
+
+# Archivos de testing
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Archivos de deployment
+*.war
+*.jar
+*.ear
+
+# Archivos de configuración específicos del proyecto
+# (mantener solo los archivos de configuración de ejemplo)
+# config_paquete.json (se genera automáticamente)
+
+# Directorios de trabajo temporal
+temp/
+tmp/
+outputs/
+uploads/
+
+# Archivos de curso específicos (opcional - descomentar si no quieres subir estos)
+# PYTC1M*.ipynb
+# modulo*.ipynb
+# ejemplos_completos_coursera.ipynb
+
+# Archivos de datos grandes (opcional)
+# big_book_catalog.csv
+# *.csv (archivos de datos grandes)
+
+# Archivos de proyecto específicos (opcional)
+# proyecto_montaje_molino.py
+# montaje.py
+# curva*.py
+# CURVA*.py 
