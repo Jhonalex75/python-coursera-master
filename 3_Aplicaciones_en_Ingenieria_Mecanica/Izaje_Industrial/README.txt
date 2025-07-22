@@ -1,0 +1,1 @@
+Este directorio contiene materiales relacionados con el izaje industrial.

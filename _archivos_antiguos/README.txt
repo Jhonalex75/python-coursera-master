@@ -1,0 +1,1 @@
+# Esta carpeta contiene scripts antiguos que han sido reemplazados por versiones mejoradas en formato Jupyter Notebook.
